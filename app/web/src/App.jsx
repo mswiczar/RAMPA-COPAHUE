@@ -1,0 +1,73 @@
+import { useEffect, useState } from "react";
+import { useFetch } from "./live.jsx";
+import Room from "./components/Room.jsx";
+import AgentPanel from "./components/AgentPanel.jsx";
+import TasksView from "./components/TasksView.jsx";
+import SchedulesView from "./components/SchedulesView.jsx";
+import OutboxView from "./components/OutboxView.jsx";
+import DeliverablesView from "./components/DeliverablesView.jsx";
+
+function useRoute() {
+  const read = () => (window.location.hash.replace(/^#\/?/, "") || "sala").split("/");
+  const [route, setRoute] = useState(read);
+  useEffect(() => {
+    const onHash = () => setRoute(read());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+  return route;
+}
+
+export default function App() {
+  const [view, param] = useRoute();
+  const { data: agents } = useFetch("/api/agents");
+  const { data: summary } = useFetch("/api/summary");
+  const agentId = view === "sala" ? param || "ceo" : null;
+
+  const nav = [
+    ["sala", "Sala"],
+    ["tareas", "Tareas", summary?.pendingApprovals],
+    ["programaciones", "Programaciones", null],
+    ["bandeja", "Bandeja de salida", summary?.emailsPending],
+    ["entregables", "Entregables", null]
+  ];
+
+  return (
+    <div className="app">
+      <header className="topbar">
+        <a className="brand" href="#/sala">
+          <span className="brand-mark" aria-hidden="true" />
+          <span>
+            <strong>Sala 24/7</strong>
+            <small>Laboratorio Copahue</small>
+          </span>
+        </a>
+        <nav className="nav" aria-label="Secciones">
+          {nav.map(([id, label, badge]) => (
+            <a key={id} href={`#/${id}`} className={view === id ? "active" : ""} aria-current={view === id ? "page" : undefined}>
+              {label}
+              {badge ? <span className="badge">{badge}</span> : null}
+            </a>
+          ))}
+        </nav>
+        <div className="top-meta">
+          {summary && <span className="pill"><i className="dot live" />{summary.runningTasks} en curso · {summary.activeSchedules} programaciones</span>}
+          <span className="pill">Datos simulados</span>
+        </div>
+      </header>
+
+      <main className="content">
+        {view === "sala" && (
+          <div className="sala">
+            <Room agents={agents || []} selected={agentId} />
+            {agents && <AgentPanel key={agentId} agentId={agentId} agents={agents} />}
+          </div>
+        )}
+        {view === "tareas" && <TasksView agents={agents || []} focus={param} />}
+        {view === "programaciones" && <SchedulesView agents={agents || []} />}
+        {view === "bandeja" && <OutboxView agents={agents || []} focus={param} />}
+        {view === "entregables" && <DeliverablesView agents={agents || []} focus={param} />}
+      </main>
+    </div>
+  );
+}

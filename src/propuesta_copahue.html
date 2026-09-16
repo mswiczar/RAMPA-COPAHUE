@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>RAMPA · Laboratorio Copahue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: 13.333in 7.5in; margin: 0; }
+  :root {
+    --g950: #0a2a1f; --g900: #0d3326; --g800: #134332; --g700: #1a5a42;
+    --g600: #1f7a57; --g400: #3fae7f; --g100: #dcefe5;
+    --gold: #d99a2b; --gold-soft: #f6e7c8; --red: #c0553a; --red-soft: #f6ddd5;
+    --ink: #17241f; --muted: #5d6b65; --card: #f1f4f2; --line: #dde5e1; --paper: #ffffff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #888; }
+  body { font-family: "Inter", "Segoe UI", Arial, sans-serif; color: var(--ink); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slide { width: 13.333in; height: 7.5in; position: relative; overflow: hidden; background: var(--paper); padding: 0.55in 0.7in 0.5in; page-break-after: always; break-after: page; display: flex; flex-direction: column; }
+  .slide:last-child { page-break-after: auto; }
+  .dark { background: var(--g900); color: #fff; }
+  h1, h2, h3 { font-family: "Source Serif 4", Georgia, serif; font-weight: 700; letter-spacing: -0.01em; }
+  h2 { font-size: 30px; line-height: 1.15; color: var(--g900); }
+  .dark h2 { color: #fff; }
+  h3 { font-size: 18px; line-height: 1.2; }
+  .eyebrow { font-size: 10.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .lead { font-size: 14.5px; line-height: 1.5; color: var(--muted); margin-top: 8px; max-width: 9.5in; }
+  .dark .lead { color: #c9ddd3; }
+  .topbar { position: absolute; top: 0.3in; right: 0.7in; font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .dark .topbar { color: #8fb5a4; }
+  .foot { position: absolute; bottom: 0.25in; left: 0.7in; right: 0.7in; display: flex; justify-content: space-between; font-size: 9px; color: #9aa7a1; letter-spacing: 0.06em; }
+  .dark .foot { color: #6f988a; }
+  .body { flex: 1; display: flex; flex-direction: column; margin-top: 22px; min-height: 0; }
+
+  /* Cover */
+  .cover { padding: 0.9in 0.9in; justify-content: center; }
+  .cover .orb { position: absolute; border-radius: 50%; }
+  .cover h1 { font-size: 64px; color: #fff; margin: 6px 0 18px; }
+  .cover .sub { font-size: 20px; line-height: 1.45; color: #d7e7df; max-width: 7.2in; }
+  .cover .tag { margin-top: 26px; font-family: "Source Serif 4", Georgia, serif; font-size: 22px; color: var(--gold); }
+  .pills { display: flex; gap: 12px; margin-top: 34px; }
+  .pill { border: 1px solid #3f7d64; border-radius: 999px; padding: 8px 18px; font-size: 12px; color: #d7e7df; }
+
+  /* Generic cards */
+  .grid { display: grid; gap: 14px; }
+  .card { background: var(--card); border-radius: 10px; padding: 16px 18px; }
+  .dark .card { background: var(--g800); }
+  .num { width: 26px; height: 26px; border-radius: 50%; background: var(--gold); color: var(--g950); font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .small { font-size: 12px; line-height: 1.45; color: var(--muted); }
+  .dark .small { color: #b9d0c5; }
+
+  /* Systems map */
+  .legend { display: flex; gap: 20px; font-size: 11.5px; color: var(--muted); margin-top: 4px; }
+  .legend span { display: inline-flex; align-items: center; gap: 7px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .d-ok { background: var(--g400); } .d-xls { background: var(--gold); } .d-no { background: var(--red); }
+  .domains { grid-template-columns: repeat(4, 1fr); margin-top: 18px; flex: 1; }
+  .domain { display: flex; flex-direction: column; }
+  .cuts { margin-top: 14px; background: var(--g900); color: #fff; border-radius: 10px; padding: 14px 20px; display: flex; gap: 14px; align-items: center; font-size: 13px; flex-wrap: wrap; }
+  .cuts b { color: var(--gold); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; margin-right: 6px; }
+  .cuts span { background: var(--g800); border-radius: 999px; padding: 6px 14px; }
+  .domain { background: var(--card); border-radius: 10px; padding: 14px 14px 12px; }
+  .domain h4 { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--g700); margin-bottom: 10px; }
+  .sys { display: flex; align-items: flex-start; gap: 9px; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 11px 12px; margin-bottom: 8px; }
+  .sys .dot { margin-top: 4px; flex: none; }
+  .sys b { font-size: 14px; display: block; margin-bottom: 2px; }
+  .sys i { font-style: normal; font-size: 11.5px; color: var(--muted); display: block; line-height: 1.35; }
+
+  /* Friction */
+  .fr { grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; flex: 1; }
+  .fr .card { border-left: 4px solid var(--red); display: flex; flex-direction: column; gap: 8px; }
+  .fr h3 { font-size: 16.5px; color: var(--g900); }
+  .fr .cost { margin-top: auto; font-size: 11.5px; color: var(--red); font-weight: 600; }
+
+  /* Layers */
+  .layers { display: grid; grid-template-columns: 1.15fr 1fr; gap: 28px; flex: 1; }
+  .stack { display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+  .layer { border-radius: 10px; padding: 16px 20px; display: flex; gap: 16px; align-items: center; }
+  .layer h3 { font-size: 17px; }
+  .layer p { font-size: 12.5px; line-height: 1.45; margin-top: 3px; }
+  .l1 { background: var(--g100); color: var(--g900); }
+  .l2 { background: var(--g600); color: #fff; }
+  .l3 { background: var(--g900); color: #fff; }
+  .l4 { background: var(--gold-soft); color: var(--g950); }
+  .arrow { text-align: center; color: var(--g400); font-size: 14px; line-height: 1; }
+  .quote { background: var(--g900); color: #fff; border-radius: 12px; padding: 26px 28px; display: flex; flex-direction: column; justify-content: center; }
+  .quote .big { font-family: "Source Serif 4", Georgia, serif; font-size: 26px; line-height: 1.25; }
+  .quote .q { margin-top: 18px; display: flex; flex-direction: column; gap: 9px; }
+  .quote .q div { background: var(--g800); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #e2efe8; }
+
+  /* Agent slides */
+  .agent { display: grid; grid-template-columns: 1.35fr 1fr; gap: 22px; flex: 1; min-height: 0; }
+  .col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .func { display: flex; gap: 12px; align-items: flex-start; background: var(--card); border-radius: 9px; padding: 12px 14px; }
+  .func b { font-size: 14px; color: var(--g900); display: block; margin-bottom: 2px; }
+  .func span { font-size: 12px; color: var(--muted); line-height: 1.45; }
+  .ico { width: 30px; height: 30px; border-radius: 8px; background: var(--g600); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; flex: none; }
+  .ask { background: var(--g900); color: #fff; border-radius: 10px; padding: 16px 18px; }
+  .ask .eyebrow { margin-bottom: 10px; }
+  .ask p { font-family: "Source Serif 4", Georgia, serif; font-size: 15px; line-height: 1.35; padding: 7px 0; border-top: 1px solid #2a5a47; }
+  .ask p:first-of-type { border-top: 0; padding-top: 0; }
+  .before { background: var(--red-soft); border-radius: 10px; padding: 14px 18px; }
+  .before .eyebrow { color: var(--red); margin-bottom: 6px; }
+  .before li, .after li { font-size: 12.5px; line-height: 1.45; margin-left: 16px; margin-bottom: 3px; }
+  .after { background: var(--g100); border-radius: 10px; padding: 14px 18px; }
+  .after .eyebrow { color: var(--g600); margin-bottom: 6px; }
+  .sources { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .sources .lbl { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-right: 4px; }
+  .chip { font-size: 11px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--g800); font-weight: 500; }
+  .agent-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
+  .wave { font-size: 11px; font-weight: 700; color: var(--g950); background: var(--gold); border-radius: 999px; padding: 6px 14px; white-space: nowrap; }
+
+  /* Before/after table */
+  table.ba { width: 100%; border-collapse: separate; border-spacing: 0 7px; margin-top: 10px; }
+  table.ba th { text-align: left; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; padding: 0 14px 4px; }
+  table.ba th.h1 { color: var(--red); } table.ba th.h2 { color: var(--g600); } table.ba th.h0 { color: var(--muted); }
+  table.ba td { font-size: 14.5px; line-height: 1.4; padding: 16px 18px; vertical-align: middle; }
+  table.ba td.area { font-weight: 700; color: var(--g900); background: var(--card); border-radius: 8px 0 0 8px; width: 15%; }
+  table.ba td.hoy { background: #fbf1ed; width: 42%; }
+  table.ba td.con { background: #eaf5ef; border-radius: 0 8px 8px 0; width: 43%; }
+
+  /* Timeline */
+  .tl { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 10px; }
+  .step { background: var(--g800); border-radius: 10px; padding: 20px 18px; min-height: 280px; display: flex; flex-direction: column; gap: 8px; }
+  .step.first { background: var(--g600); }
+  .step .when { font-size: 11px; color: var(--gold); font-weight: 700; letter-spacing: 0.06em; }
+  .step h3 { font-size: 21px; color: #fff; }
+  .step p { font-size: 13.5px; line-height: 1.5; color: #c9ddd3; }
+  .step .gate { margin-top: auto; font-size: 12.5px; font-weight: 600; color: #fff; border-top: 1px solid #3a6f5a; padding-top: 8px; }
+  .how { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+  .how .small { font-size: 13px; }
+  .how .card h3 { font-size: 16.5px; color: var(--gold); margin-bottom: 4px; }
+
+  /* Radiografía */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; flex: 1; }
+  .list { display: flex; flex-direction: column; gap: 9px; }
+  .li { display: flex; gap: 12px; align-items: flex-start; background: var(--card); border-radius: 9px; padding: 11px 14px; }
+  .li b { font-size: 13.5px; color: var(--g900); display: block; }
+  .li span { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .panel { background: var(--g900); color: #fff; border-radius: 12px; padding: 22px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .panel h3 { font-size: 20px; }
+  .panel .row { display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #2a5a47; padding-top: 9px; font-size: 12.5px; }
+  .panel .row b { color: #fff; font-weight: 600; }
+  .panel .row span { color: #b9d0c5; text-align: right; }
+  /* Fill vertical space */
+  .sys { flex: 1; align-items: center; margin-bottom: 8px; }
+  .sys .dot { margin-top: 0; }
+  .col > .func { flex: 1; align-items: center; padding: 14px 18px; }
+  .func b { font-size: 16px; }
+  .func span { font-size: 13.5px; }
+  .ico { width: 36px; height: 36px; font-size: 17px; }
+  .before li { font-size: 14px; margin-bottom: 5px; }
+  .before { padding: 18px 22px; }
+  .ask { flex: 1; display: flex; flex-direction: column; justify-content: space-evenly; padding: 22px 24px; }
+  .ask p { font-size: 21px; padding: 16px 0; }
+  .chip { font-size: 12px; padding: 5px 12px; }
+  table.ba td { padding: 21px 20px; font-size: 15px; }
+  .step { min-height: 300px; }
+  .how .card { padding: 20px 22px; } .how .small { font-size: 14px; }
+  .step p { font-size: 14.5px; }
+  .list .li { flex: 1; align-items: center; padding: 14px 18px; }
+  .li b { font-size: 16px; } .li span { font-size: 13.5px; }
+  .panel { justify-content: space-between; padding: 26px 28px; }
+  .panel h3 { font-size: 23px; }
+  .panel .row { font-size: 14px; padding-top: 13px; }
+</style>
+</head>
+<body>
+
+<!-- 1. PORTADA -->
+<section class="slide dark cover">
+  <div class="orb" style="width:6.2in;height:6.2in;right:-1.6in;top:-2.2in;background:#134332;"></div>
+  <div class="orb" style="width:3.2in;height:3.2in;right:1.1in;bottom:-1.3in;background:#1f7a57;opacity:.85;"></div>
+  <div class="orb" style="width:1.1in;height:1.1in;right:3.9in;top:0.55in;background:#d99a2b;opacity:.9;"></div>
+  <div style="position:relative;">
+    <div class="eyebrow">Propuesta de implementación · 24/7 AI Ready</div>
+    <h1>RAMPA para Laboratorio Copahue</h1>
+    <p class="sub">Sus sistemas ya tienen la información. La propuesta es que hablen entre sí y que un equipo de agentes trabaje sobre ellos, todos los días, para Caviahue.</p>
+    <p class="tag">Menos fricción. Más capacidad con la misma gente.</p>
+    <div class="pills"><span class="pill">Comercial</span><span class="pill">Supply</span><span class="pill">E-commerce y Finanzas</span><span class="pill">Marketing y Producto</span></div>
+  </div>
+</section>
+
+<!-- 2. MAPA DE SISTEMAS -->
+<section class="slide">
+  <div class="topbar">Lo que vimos</div>
+  <div class="eyebrow">Punto de partida</div>
+  <h2>Copahue ya tiene los datos. Están repartidos en 17 lugares.</h2>
+  <div class="legend" style="margin-top:12px;">
+    <span><i class="dot d-ok"></i>Conectado con otro sistema</span>
+    <span><i class="dot d-xls"></i>Se descarga en Excel o llega por mail</span>
+    <span><i class="dot d-no"></i>Aislado o con un corte clave</span>
+  </div>
+  <div class="grid domains">
+    <div class="domain">
+      <h4>Gestión y finanzas</h4>
+      <div class="sys"><i class="dot d-no"></i><div><b>Tango</b><i>ERP · stock teórico, sin stock real de Disprofarma ni e-commerce</i></div></div>
+      <div class="sys"><i class="dot d-xls"></i><div><b>Presupuesto anual</b><i>Excel · 4 versiones al año</i></div></div>
+      <div class="sys"><i class="dot d-no"></i><div><b>Naloo</b><i>RR.HH. · no conectado</i></div></div>
+    </div>
+    <div class="domain">
+      <h4>Mercado y fuerza de ventas</h4>
+      <div class="sys"><i class="dot d-xls"></i><div><b>IQVia</b><i>Mercado por zona · se bajan reportes Excel</i></div></div>
+      <div class="sys"><i class="dot d-ok"></i><div><b>Elvis</b><i>CRM visitadores · conectado a médicos y farmacias</i></div></div>
+      <div class="sys"><i class="dot d-ok"></i><div><b>Bonus Dermo</b><i>Recetas y bonos · no se cruza con Elvis</i></div></div>
+      <div class="sys"><i class="dot d-xls"></i><div><b>WGSN</b><i>Tendencias · reportes trimestrales</i></div></div>
+    </div>
+    <div class="domain">
+      <h4>Canal farmacias y supply</h4>
+      <div class="sys"><i class="dot d-ok"></i><div><b>Avanter · Sell Out</b><i>Descuentos compartidos y sell-out de farmacias</i></div></div>
+      <div class="sys"><i class="dot d-no"></i><div><b>Disprofarma</b><i>Logística y facturación · stock no conectado a Tango</i></div></div>
+      <div class="sys"><i class="dot d-ok"></i><div><b>Capataz</b><i>Demanda, forecast y plan de producción</i></div></div>
+      <div class="sys"><i class="dot d-xls"></i><div><b>Grilla promocional · Stock online</b><i>Excel y mail diario</i></div></div>
+    </div>
+    <div class="domain">
+      <h4>E-commerce y diseño</h4>
+      <div class="sys"><i class="dot d-no"></i><div><b>Shopify · Mercado Libre</b><i>Venta online · no conectados a Tango</i></div></div>
+      <div class="sys"><i class="dot d-ok"></i><div><b>Mercado Pago · Facturante</b><i>Cobro y facturación online</i></div></div>
+      <div class="sys"><i class="dot d-xls"></i><div><b>Ship Now</b><i>Fulfillment · se bajan reportes Excel</i></div></div>
+      <div class="sys"><i class="dot d-ok"></i><div><b>Moondesk</b><i>Diseño y aprobación de packaging</i></div></div>
+    </div>
+  </div>
+  <div class="cuts"><b>Cortes clave</b><span>Stock Disprofarma sin llegar a Tango</span><span>E-commerce sin llegar a Tango</span><span>Elvis y Bonus Dermo sin cruzar</span><span>IQVia y WGSN en archivos</span><span>Presupuesto en Excel</span></div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>Fuente: relevamiento de sistemas de Copahue</span></div>
+</section>
+
+<!-- 3. FRICCIONES -->
+<section class="slide">
+  <div class="topbar">Lo que vimos</div>
+  <div class="eyebrow">Dónde se pierde tiempo hoy</div>
+  <h2>Seis fricciones que se repiten todas las semanas</h2>
+  <p class="lead">No faltan datos. Falta juntarlos: cada respuesta importante depende de que alguien baje reportes, los cruce a mano y los mande por mail.</p>
+  <div class="body">
+    <div class="grid fr">
+      <div class="card"><h3>¿Cuánto stock hay de verdad?</h3><p class="small">Tango muestra stock teórico. El real está en Disprofarma y Ship Now, y los vencimientos se siguen aparte.</p><p class="cost">Riesgo de quiebres y de producto vencido</p></div>
+      <div class="card"><h3>Sell-in vs. sell-out, a mano</h3><p class="small">Lo que se factura a droguerías, lo que venden las farmacias y lo que dice IQVia viven en tres lugares distintos.</p><p class="cost">La tendencia real se ve tarde</p></div>
+      <div class="card"><h3>La visita no se une con la receta</h3><p class="small">Elvis registra visitas y Bonus Dermo registra recetas, pero no se cruzan para ver qué visitador genera prescripción.</p><p class="cost">No se mide la productividad real</p></div>
+      <div class="card"><h3>¿Funcionó el ciclo promocional?</h3><p class="small">La grilla está en Excel, los descuentos se liquidan en Avanter y el resultado aparece en el sell-out.</p><p class="cost">Se repiten promociones sin evidencia</p></div>
+      <div class="card"><h3>E-commerce sin conciliar</h3><p class="small">Shopify, Mercado Libre, Mercado Pago y Facturante no llegan a Tango. Hay que conciliar ventas, comisiones y cobros.</p><p class="cost">Trabajo manual y margen por canal difuso</p></div>
+      <div class="card"><h3>Real vs. presupuesto, en planilla</h3><p class="small">El presupuesto y el de marketing se actualizan en Excel y se comparan contra lo real cuando alguien tiene tiempo.</p><p class="cost">Los desvíos se detectan a fin de mes</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>03</span></div>
+</section>
+
+<!-- 4. QUÉ CAMBIA -->
+<section class="slide">
+  <div class="topbar">La propuesta</div>
+  <div class="eyebrow">Qué cambia</div>
+  <h2>De buscar la información a preguntarla</h2>
+  <p class="lead">No se reemplaza ningún sistema. Se agrega una capa que los hace consultables, y encima trabajan agentes, uno por área, con aprobación humana.</p>
+  <div class="body">
+    <div class="layers">
+      <div class="stack">
+        <div class="layer l4"><span class="num">4</span><div><h3>Dirección y equipos</h3><p>Reciben alertas, resúmenes y recomendaciones. Deciden y aprueban.</p></div></div>
+        <div class="arrow">▲</div>
+        <div class="layer l3"><span class="num">3</span><div><h3>Agentes verticales de Copahue</h3><p>Comercial, Supply, E-commerce y Finanzas, Marketing y Producto. Quedan en la empresa.</p></div></div>
+        <div class="arrow">▲</div>
+        <div class="layer l2"><span class="num">2</span><div><h3>Un idioma común de datos</h3><p>Mismo producto, cliente, médico y zona en todos los sistemas. Es lo que permite cruzarlos.</p></div></div>
+        <div class="arrow">▲</div>
+        <div class="layer l1"><span class="num">1</span><div><h3>Los sistemas que ya usan</h3><p>Tango, IQVia, Elvis, Avanter, Disprofarma, Shopify y el resto, conectados de forma segura y solo lectura al inicio.</p></div></div>
+      </div>
+      <div class="quote">
+        <div class="eyebrow">En la práctica</div>
+        <p class="big">Una pregunta que hoy lleva días de planillas se responde en minutos, citando de qué sistema sale cada número.</p>
+        <div class="q">
+          <div>“¿Qué farmacias del AMBA bajaron sell-out este mes y tienen descuento activo?”</div>
+          <div>“¿Qué productos se quedan sin stock antes del próximo ciclo promocional?”</div>
+          <div>“¿Cómo vamos contra presupuesto por canal, incluyendo comisiones?”</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>04</span></div>
+</section>
+
+<!-- 5. AGENTE COMERCIAL -->
+<section class="slide">
+  <div class="topbar">Los agentes</div>
+  <div class="agent-head">
+    <div><div class="eyebrow">Agente 1</div><h2>Agente Comercial</h2>
+    <p class="lead" style="margin-top:4px;">Un analista comercial que mira el mercado, el canal y la fuerza de ventas todos los días.</p></div>
+    <span class="wave">Primera ola · se recomienda empezar acá</span>
+  </div>
+  <div class="body" style="margin-top:16px;">
+    <div class="agent">
+      <div class="col">
+        <div class="func"><div class="ico">◎</div><div><b>Lectura semanal del negocio</b><span>Sell-in, sell-out y market share por producto y por zona, en un solo resumen para la dirección y los KAM.</span></div></div>
+        <div class="func"><div class="ico">⚑</div><div><b>Alertas tempranas</b><span>Farmacias que caen en sell-out, médicos que dejan de prescribir, zonas donde la competencia gana share.</span></div></div>
+        <div class="func"><div class="ico">↔</div><div><b>Productividad de la fuerza de ventas</b><span>Cruza visitas de Elvis con recetas de Bonus Dermo: qué visitador, médico y producto generan venta.</span></div></div>
+        <div class="func"><div class="ico">%</div><div><b>Resultado de cada ciclo promocional</b><span>Compara la grilla contra los descuentos de Avanter y el sell-out, y recomienda qué repetir.</span></div></div>
+        <div class="sources"><span class="lbl">Usa</span><span class="chip">Tango</span><span class="chip">IQVia</span><span class="chip">Elvis</span><span class="chip">Bonus Dermo</span><span class="chip">Avanter</span><span class="chip">Sell Out</span><span class="chip">Grilla promocional</span></div>
+      </div>
+      <div class="col">
+        <div class="before"><div class="eyebrow">Fricción que sacamos</div><ul><li>Bajar y cruzar Excel de IQVia y sell-out</li><li>Armar reportes de visitadores a mano</li><li>Evaluar promociones por intuición</li></ul></div>
+        <div class="ask"><div class="eyebrow">Se le puede preguntar</div>
+          <p>¿Qué visitadores generan más recetas por visita?</p>
+          <p>¿Dónde perdimos share frente a la competencia?</p>
+          <p>¿Qué descuento movió el sell-out el último ciclo?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>05</span></div>
+</section>
+
+<!-- 6. AGENTE SUPPLY -->
+<section class="slide">
+  <div class="topbar">Los agentes</div>
+  <div class="agent-head">
+    <div><div class="eyebrow">Agente 2</div><h2>Agente Supply</h2>
+    <p class="lead" style="margin-top:4px;">Una sola verdad de stock, desde la planta hasta la góndola online.</p></div>
+    <span class="wave">Segunda ola</span>
+  </div>
+  <div class="body" style="margin-top:16px;">
+    <div class="agent">
+      <div class="col">
+        <div class="func"><div class="ico">▦</div><div><b>Stock real unificado</b><span>Tango, Disprofarma y Ship Now en una sola vista, por producto, depósito y fecha de vencimiento.</span></div></div>
+        <div class="func"><div class="ico">⚑</div><div><b>Alertas de quiebre y vencimiento</b><span>Avisa antes de que falte producto o de que un lote se acerque a vencer.</span></div></div>
+        <div class="func"><div class="ico">↗</div><div><b>Producción alineada a la promoción</b><span>Lee la grilla promocional y el forecast de Capataz, y señala dónde el plan no alcanza para el próximo ciclo.</span></div></div>
+        <div class="func"><div class="ico">◉</div><div><b>Quiebres en farmacias online</b><span>Procesa el informe diario que hoy llega por mail y lo convierte en alertas accionables para Comercial.</span></div></div>
+        <div class="sources"><span class="lbl">Usa</span><span class="chip">Tango</span><span class="chip">Disprofarma</span><span class="chip">Ship Now</span><span class="chip">Capataz</span><span class="chip">Informe de stock online</span><span class="chip">Grilla promocional</span></div>
+      </div>
+      <div class="col">
+        <div class="before"><div class="eyebrow">Fricción que sacamos</div><ul><li>Pedir stock a Disprofarma y comparar con Tango</li><li>Leer el mail diario de stocks a mano</li><li>Ajustar producción cuando el quiebre ya ocurrió</li></ul></div>
+        <div class="ask"><div class="eyebrow">Se le puede preguntar</div>
+          <p>¿Qué productos quiebran antes del próximo ciclo?</p>
+          <p>¿Qué lotes vencen en los próximos 90 días?</p>
+          <p>¿Dónde difiere el stock de Tango del real?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>06</span></div>
+</section>
+
+<!-- 7. AGENTE E-COMMERCE Y FINANZAS -->
+<section class="slide">
+  <div class="topbar">Los agentes</div>
+  <div class="agent-head">
+    <div><div class="eyebrow">Agente 3</div><h2>Agente E-commerce y Finanzas</h2>
+    <p class="lead" style="margin-top:4px;">Cada venta, comisión y cobro conciliado, y el presupuesto siempre al día.</p></div>
+    <span class="wave">Tercera ola</span>
+  </div>
+  <div class="body" style="margin-top:16px;">
+    <div class="agent">
+      <div class="col">
+        <div class="func"><div class="ico">⇄</div><div><b>Conciliación automática del canal online</b><span>Une Shopify, Mercado Libre, Mercado Pago y Facturante con Tango, y marca solo las diferencias.</span></div></div>
+        <div class="func"><div class="ico">$</div><div><b>Margen real por canal</b><span>Incluye comisiones de Mercado Pago y Mercado Libre, logística y descuentos a farmacias.</span></div></div>
+        <div class="func"><div class="ico">≋</div><div><b>Real vs. presupuesto continuo</b><span>Compara ventas, gastos y contribución contra la versión vigente del presupuesto, sin esperar el cierre.</span></div></div>
+        <div class="func"><div class="ico">◷</div><div><b>Cobranzas y caja</b><span>Cuentas a cobrar, disponibilidad de cash y flujo de producción en una vista para la proyección financiera.</span></div></div>
+        <div class="sources"><span class="lbl">Usa</span><span class="chip">Tango</span><span class="chip">Shopify</span><span class="chip">Mercado Libre</span><span class="chip">Mercado Pago</span><span class="chip">Facturante</span><span class="chip">Presupuesto anual</span></div>
+      </div>
+      <div class="col">
+        <div class="before"><div class="eyebrow">Fricción que sacamos</div><ul><li>Conciliar el e-commerce contra Tango a mano</li><li>Calcular comisiones por fuera</li><li>Descubrir desvíos a fin de mes</li></ul></div>
+        <div class="ask"><div class="eyebrow">Se le puede preguntar</div>
+          <p>¿Cuánto ganamos realmente en Mercado Libre?</p>
+          <p>¿Qué líneas se desvían del presupuesto este mes?</p>
+          <p>¿Qué ventas online no están facturadas en Tango?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>07</span></div>
+</section>
+
+<!-- 8. AGENTE MARKETING Y PRODUCTO -->
+<section class="slide">
+  <div class="topbar">Los agentes</div>
+  <div class="agent-head">
+    <div><div class="eyebrow">Agente 4</div><h2>Agente Marketing y Producto</h2>
+    <p class="lead" style="margin-top:4px;">Tendencias, inversión y lanzamientos conectados con lo que pasa en el mercado.</p></div>
+    <span class="wave">Cuarta ola</span>
+  </div>
+  <div class="body" style="margin-top:16px;">
+    <div class="agent">
+      <div class="col">
+        <div class="func"><div class="ico">✦</div><div><b>Tendencias aplicadas al portfolio</b><span>Cruza los reportes de WGSN con los segmentos de IQVia para detectar oportunidades de lanzamiento.</span></div></div>
+        <div class="func"><div class="ico">◎</div><div><b>Retorno de cada acción</b><span>Relaciona el presupuesto de marketing (Google Ads, Meta, influencers, punto de venta) con la venta.</span></div></div>
+        <div class="func"><div class="ico">▤</div><div><b>Estado de packaging y lanzamientos</b><span>Sigue las versiones y aprobaciones en Moondesk y avisa qué frena un lanzamiento.</span></div></div>
+        <div class="func"><div class="ico">✉</div><div><b>Material de ciclo listo a tiempo</b><span>Arma el resumen de productos en foco y descuentos de cada ciclo para comunicar a farmacias.</span></div></div>
+        <div class="sources"><span class="lbl">Usa</span><span class="chip">WGSN</span><span class="chip">IQVia</span><span class="chip">Presupuesto de marketing</span><span class="chip">Moondesk</span><span class="chip">Shopify</span><span class="chip">Grilla promocional</span></div>
+      </div>
+      <div class="col">
+        <div class="before"><div class="eyebrow">Fricción que sacamos</div><ul><li>Leer reportes de tendencias sin conectarlos al negocio</li><li>Medir la inversión de marketing por fuera</li><li>Perseguir aprobaciones de packaging</li></ul></div>
+        <div class="ask"><div class="eyebrow">Se le puede preguntar</div>
+          <p>¿Qué tendencia de skin care no estamos cubriendo?</p>
+          <p>¿Qué acción de marketing movió más venta online?</p>
+          <p>¿Qué packaging está demorado y por qué?</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>08</span></div>
+</section>
+
+<!-- 9. ANTES / DESPUÉS -->
+<section class="slide">
+  <div class="topbar">Resumen</div>
+  <div class="eyebrow">Lo que sacamos de fricción</div>
+  <h2>Hoy vs. con agentes</h2>
+  <div class="body" style="margin-top:10px;">
+    <table class="ba">
+      <tr><th class="h0">Tema</th><th class="h1">Hoy</th><th class="h2">Con agentes</th></tr>
+      <tr><td class="area">Stock</td><td class="hoy">Stock teórico en Tango, real en depósitos, vencimientos aparte</td><td class="con">Una sola vista de stock real con alertas de quiebre y vencimiento</td></tr>
+      <tr><td class="area">Mercado</td><td class="hoy">Excel de IQVia descargados y analizados a mano</td><td class="con">Share y competencia por zona, listos para consultar</td></tr>
+      <tr><td class="area">Fuerza de ventas</td><td class="hoy">Visitas y recetas en sistemas separados</td><td class="con">Productividad por visitador, médico y producto</td></tr>
+      <tr><td class="area">Promociones</td><td class="hoy">Grilla en Excel, resultado difícil de medir</td><td class="con">Cada ciclo evaluado contra sell-out, con recomendación</td></tr>
+      <tr><td class="area">E-commerce</td><td class="hoy">Shopify, MELI y Mercado Pago sin llegar a Tango</td><td class="con">Conciliación automática y margen real por canal</td></tr>
+      <tr><td class="area">Presupuesto</td><td class="hoy">Comparación manual contra lo real, a fin de mes</td><td class="con">Desvíos detectados en el momento</td></tr>
+      <tr><td class="area">Dirección</td><td class="hoy">Información que llega tarde, por mail y en planillas</td><td class="con">Un resumen diario con lo que requiere decisión</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>09</span></div>
+</section>
+
+<!-- 10. IMPLEMENTACIÓN -->
+<section class="slide dark">
+  <div class="topbar">Cómo lo hacemos</div>
+  <div class="eyebrow">Implementación</div>
+  <h2>Un agente a la vez, empezando por lo que más duele</h2>
+  <p class="lead">Cada etapa se cierra con un resultado medido antes de pasar a la siguiente. Nada queda como piloto eterno.</p>
+  <div class="body" style="margin-top:14px;">
+    <div class="tl">
+      <div class="step first"><span class="when">SEMANAS 1–3</span><h3>Radiografía</h3><p>Relevamos cada sistema con su área, confirmamos cómo se conecta y medimos la situación actual.</p><span class="gate">Línea de base firmada</span></div>
+      <div class="step"><span class="when">SEMANAS 2–4</span><h3>Perímetro seguro</h3><p>Accesos por rol, solo lectura al inicio, datos clasificados y límites claros para cada agente.</p><span class="gate">Puerta Segura aprobada</span></div>
+      <div class="step"><span class="when">SEMANAS 4–14</span><h3>Agente Comercial</h3><p>Conectamos los sistemas comerciales, unificamos datos y el agente trabaja con usuarios reales.</p><span class="gate">Mejora sostenida 4 semanas</span></div>
+      <div class="step"><span class="when">TRIMESTRE SIGUIENTE</span><h3>Agente Supply</h3><p>Se suman Disprofarma, Ship Now y Capataz sobre la base ya construida.</p><span class="gate">Stock real unificado</span></div>
+      <div class="step"><span class="when">SIGUIENTES TRIMESTRES</span><h3>Finanzas y Marketing</h3><p>E-commerce y Finanzas, luego Marketing y Producto, hasta completar la sala 24/7.</p><span class="gate">Un vertical por trimestre</span></div>
+    </div>
+    <div class="how">
+      <div class="card"><h3>Sistemas con conexión directa</h3><p class="small">Shopify, Mercado Libre, Mercado Pago, Facturante y Tango se consultan en línea.</p></div>
+      <div class="card"><h3>Reportes que llegan solos</h3><p class="small">IQVia, sell-out, Disprofarma, el mail de stocks y los Excel se incorporan automáticamente.</p></div>
+      <div class="card"><h3>Control humano siempre</h3><p class="small">Los agentes recomiendan; toda acción con impacto (descuentos, notas de crédito, producción) se aprueba.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>10</span></div>
+</section>
+
+<!-- 11. PRIMER PASO -->
+<section class="slide">
+  <div class="topbar">Para empezar</div>
+  <div class="eyebrow">El primer paso</div>
+  <h2>Radiografía: 2 a 3 semanas, empezando por medir</h2>
+  <div class="body">
+    <div class="two">
+      <div class="list">
+        <div class="eyebrow" style="color:var(--g600);margin-bottom:0;">Qué entregamos</div>
+        <div class="li"><span class="num">1</span><div><b>Mapa de sistemas confirmado</b><span>Qué tiene cada sistema, quién es dueño y cómo se conecta.</span></div></div>
+        <div class="li"><span class="num">2</span><div><b>Fricciones medidas</b><span>Cuánto tiempo y cuántas personas insume hoy cada cruce manual.</span></div></div>
+        <div class="li"><span class="num">3</span><div><b>Diseño del Agente Comercial</b><span>Funciones, fuentes, alertas y qué aprueba cada persona.</span></div></div>
+        <div class="li"><span class="num">4</span><div><b>Hoja de ruta a 6 meses</b><span>Orden de los agentes y resultados esperados en cada etapa.</span></div></div>
+      </div>
+      <div class="panel">
+        <div class="eyebrow">Qué necesitamos de Copahue</div>
+        <h3>Un referente por área y acceso a sus sistemas</h3>
+        <div class="row"><b>Dirección General</b><span>Sponsor y prioridades</span></div>
+        <div class="row"><b>Comercial</b><span>Elvis, Bonus Dermo, Avanter, Sell Out</span></div>
+        <div class="row"><b>Administración y Finanzas</b><span>Tango, presupuesto, Mercado Pago</span></div>
+        <div class="row"><b>Supply Chain</b><span>Capataz, Disprofarma, Ship Now</span></div>
+        <div class="row"><b>Marketing y E-commerce</b><span>IQVia, WGSN, Shopify, Mercado Libre</span></div>
+        <div class="row"><b>Proveedores</b><span>Contacto técnico de Elvis, Avanter, Capataz y Disprofarma</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>RAMPA · Laboratorio Copahue</span><span>11</span></div>
+</section>
+
+<!-- 12. CIERRE -->
+<section class="slide dark cover">
+  <div class="orb" style="width:5.5in;height:5.5in;left:-1.8in;bottom:-2.6in;background:#134332;"></div>
+  <div class="orb" style="width:2.4in;height:2.4in;right:0.9in;top:0.7in;background:#1f7a57;opacity:.85;"></div>
+  <div style="position:relative;text-align:left;margin-left:0.3in;">
+    <div class="eyebrow">24/7 AI Ready · Laboratorio Copahue</div>
+    <h1 style="font-size:52px;">Los datos ya están.<br>Hagamos que trabajen.</h1>
+    <p class="sub">Empezamos con la Radiografía y el Agente Comercial. Todo lo que se construye queda en Copahue.</p>
+    <p class="tag">Más capacidad con la misma gente.</p>
+  </div>
+</section>
+
+</body>
+</html>

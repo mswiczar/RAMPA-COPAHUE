@@ -1,0 +1,674 @@
+<title>Sala 24/7 Copahue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --ground: #061410;
+    --ground-2: #0a1d17;
+    --surface: #0f251d;
+    --surface-2: #143126;
+    --line: #21443a;
+    --text: #e6f0eb;
+    --muted: #8eaa9d;
+    --faint: #5d7b6e;
+    --agent: #49c79a;
+    --brass: #d4b06a;
+    --brass-ink: #1b1406;
+    --crit: #e2735d;
+    --warn: #e6a73f;
+    --info: #6fb9a0;
+    --serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+  }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--ground); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5; }
+  * { box-sizing: border-box; }
+  button, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+
+  .app { min-height: 100%; display: flex; flex-direction: column; padding-inline: 16px; }
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-block: 14px; border-bottom: 1px solid var(--line); }
+  .brand { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .brand h1 { font-family: var(--serif); font-size: 20px; margin: 0; letter-spacing: -0.01em; }
+  .brand span { color: var(--muted); font-size: 12.5px; }
+  .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pill { font-size: 11.5px; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .pill i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); display: inline-block; }
+  .pill.live i { background: var(--agent); box-shadow: 0 0 8px var(--agent); }
+  .pill.script i { background: var(--warn); }
+
+  .main { flex: 1; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr); gap: 20px; padding-block: 18px; min-height: 0; }
+
+  /* Sala */
+  .room { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  .room-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .eyebrow { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--brass); font-weight: 600; }
+  .room-head p { margin: 0; color: var(--muted); font-size: 13px; }
+  .stage { position: relative; width: 100%; max-width: 760px; margin-inline: auto; aspect-ratio: 16 / 11;
+    background:
+      radial-gradient(ellipse 60% 55% at 50% 78%, rgba(212,176,106,0.10), transparent 70%),
+      radial-gradient(ellipse 48% 70% at 50% 78%, transparent 64%, rgba(73,199,154,0.07) 65%, transparent 67%),
+      radial-gradient(ellipse 30% 44% at 50% 78%, transparent 64%, rgba(73,199,154,0.06) 65%, transparent 67%),
+      var(--ground-2);
+    border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+  .wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .wires line { stroke: var(--line); stroke-width: 1.2; }
+  .wires line.on { stroke: var(--brass); stroke-width: 1.6; stroke-dasharray: 5 6; animation: flow 1.2s linear infinite; }
+  @keyframes flow { to { stroke-dashoffset: -22; } }
+
+  .node { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; padding: 4px; cursor: pointer; width: 118px; text-align: center; }
+  .sphere { width: 64px; height: 64px; border-radius: 50%; position: relative;
+    background: radial-gradient(circle at 34% 28%, #d6fbe9 0%, #6fdcb2 16%, #23946b 42%, #0b3d2c 72%, #051c14 100%);
+    box-shadow: 0 0 0 1px rgba(111,220,178,0.25), 0 0 26px rgba(73,199,154,0.28); transition: transform .2s ease, box-shadow .2s ease; }
+  .sphere::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid rgba(73,199,154,0.28); animation: breathe 3.6s ease-in-out infinite; animation-delay: var(--d, 0s); }
+  @keyframes breathe { 0%,100% { transform: scale(1); opacity: .9; } 50% { transform: scale(1.12); opacity: .25; } }
+  .node:hover .sphere { transform: scale(1.06); }
+  .node[aria-pressed="true"] .sphere { box-shadow: 0 0 0 2px var(--brass), 0 0 34px rgba(212,176,106,0.45); }
+  .node-name { font-weight: 600; font-size: 12.5px; line-height: 1.2; }
+  .node-state { font-size: 11px; color: var(--muted); display: inline-flex; align-items: center; gap: 5px; }
+  .node-state b { font-weight: 600; color: var(--warn); }
+  .node[aria-pressed="true"] .node-name { color: var(--brass); }
+
+  .ceo { position: absolute; left: 50%; top: 80%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: 0; cursor: pointer; padding: 4px; }
+  .desk { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font-family: var(--serif); font-weight: 700; font-size: 20px; letter-spacing: 0.04em;
+    background: radial-gradient(circle at 35% 30%, #f6e3b8 0%, #d4b06a 34%, #8a6a2c 75%, #3d2d10 100%); color: var(--brass-ink);
+    box-shadow: 0 0 0 1px rgba(212,176,106,.4), 0 0 40px rgba(212,176,106,.25); transition: box-shadow .2s ease; }
+  .ceo[aria-pressed="true"] .desk { box-shadow: 0 0 0 3px var(--text), 0 0 48px rgba(212,176,106,.5); }
+  .ceo small { font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase; color: var(--brass); font-weight: 600; }
+
+  .room-foot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; max-width: 760px; width: 100%; margin-inline: auto; }
+  .room-foot div { border-top: 1px solid var(--line); padding-top: 8px; }
+  .room-foot b { display: block; font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+  .room-foot span { font-size: 12.5px; color: var(--text); }
+
+  /* Panel */
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; display: flex; flex-direction: column; min-height: 0; max-height: calc(100vh - 110px); overflow: hidden; }
+  .p-head { padding: 16px 18px 12px; border-bottom: 1px solid var(--line); display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: center; }
+  .p-dot { width: 34px; height: 34px; border-radius: 50%; grid-row: span 2; background: radial-gradient(circle at 34% 28%, #d6fbe9 0%, #6fdcb2 16%, #23946b 42%, #0b3d2c 80%); }
+  .p-dot.ceo-dot { background: radial-gradient(circle at 35% 30%, #f6e3b8 0%, #d4b06a 34%, #8a6a2c 80%); }
+  .p-head h2 { font-family: var(--serif); font-size: 21px; margin: 0; line-height: 1.15; text-wrap: balance; }
+  .p-head p { margin: 0; color: var(--muted); font-size: 12.5px; }
+  .sys { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .sys span { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 6px; background: var(--ground-2); border: 1px solid var(--line); color: var(--muted); }
+
+  .log { flex: 1; overflow-y: auto; padding: 14px 18px; display: flex; flex-direction: column; gap: 12px; min-height: 180px; }
+  .alerts { display: flex; flex-direction: column; gap: 6px; }
+  .alert { display: grid; grid-template-columns: 8px 1fr; gap: 10px; align-items: baseline; font-size: 13px; }
+  .alert i { width: 8px; height: 8px; border-radius: 2px; transform: translateY(-1px); }
+  .alert.crit i { background: var(--crit); } .alert.warn i { background: var(--warn); } .alert.info i { background: var(--info); }
+  .msg { max-width: 92%; }
+  .msg.user { align-self: flex-end; background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px 14px 4px 14px; padding: 8px 12px; }
+  .msg.agent { align-self: flex-start; }
+  .msg.agent .who { font-size: 11px; color: var(--muted); margin-bottom: 3px; letter-spacing: .04em; }
+  .msg.agent .body { font-size: 13.5px; }
+  .body p { margin: 0 0 6px; }
+  .body ul { margin: 2px 0 8px; padding-left: 18px; }
+  .body li { margin-bottom: 3px; }
+  .body strong { color: #fff; font-weight: 600; }
+  .body .rec { margin-top: 8px; padding: 8px 10px; border-left: 2px solid var(--brass); background: rgba(212,176,106,.07); border-radius: 0 8px 8px 0; }
+  .src { font-family: var(--mono); font-size: 10.5px; color: var(--agent); background: rgba(73,199,154,.09); border-radius: 4px; padding: 0 5px; white-space: nowrap; }
+  .thinking { color: var(--muted); font-style: italic; }
+  .note { font-size: 12px; color: var(--muted); }
+
+  .suggest { padding: 10px 18px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { border: 1px solid var(--line); background: var(--ground-2); border-radius: 999px; padding: 6px 12px; font-size: 12.5px; cursor: pointer; text-align: left; }
+  .chip:hover { border-color: var(--agent); }
+  .chip:disabled { opacity: .5; cursor: default; }
+  .ask { display: flex; gap: 8px; padding: 12px 18px 16px; }
+  .ask textarea { flex: 1; resize: none; min-height: 42px; max-height: 120px; background: var(--ground); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; color: var(--text); }
+  .ask textarea::placeholder { color: var(--faint); }
+  .send { border: 0; border-radius: 12px; padding: 0 16px; background: var(--brass); color: var(--brass-ink); font-weight: 600; cursor: pointer; min-width: 88px; }
+  .send.stop { background: var(--surface-2); color: var(--text); border: 1px solid var(--line); }
+
+  @media (max-width: 980px) {
+    .main { grid-template-columns: 1fr; }
+    .panel { max-height: none; }
+    .log { max-height: 60vh; }
+  }
+  @media (max-width: 640px) {
+    .stage { aspect-ratio: auto; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; padding: 12px; }
+    .wires { display: none; }
+    .node, .ceo { position: static; transform: none; width: auto; flex-direction: row; justify-content: flex-start; text-align: left; gap: 8px; padding: 6px; border-radius: 12px; }
+    .node > div, .ceo > div { display: flex; flex-direction: column; align-items: flex-start; }
+    .ceo { grid-column: 1 / -1; order: -1; }
+    .sphere { width: 34px; height: 34px; flex: none; }
+    .sphere::after { inset: -4px; }
+    .desk { width: 44px; height: 44px; font-size: 12px; flex: none; }
+    .room-foot { grid-template-columns: 1fr; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sphere::after, .wires line.on { animation: none; }
+  }
+</style>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>Sala 24/7 · Laboratorio Copahue</h1>
+      <span>RAMPA · 24/7 AI Ready</span>
+    </div>
+    <div class="pills">
+      <span class="pill" id="mode"><i></i><span id="mode-text">Conectando…</span></span>
+      <span class="pill">Datos simulados de demostración</span>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="room" aria-label="Sala de agentes">
+      <div class="room-head">
+        <span class="eyebrow">La compañía piensa junto a su dirección</span>
+        <p>Tocá un agente para preguntarle, o al CEO para el brief del día.</p>
+      </div>
+      <div class="stage" id="stage">
+        <svg class="wires" id="wires" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+      <div class="room-foot">
+        <div><b>Acceso permanente</b><span>Tango, IQVia, Elvis, Capataz y más, consultables.</span></div>
+        <div><b>Conocimiento acumulativo</b><span>Cada consulta cita el sistema de origen.</span></div>
+        <div><b>Activo propio</b><span>Los agentes quedan en Copahue.</span></div>
+      </div>
+    </section>
+
+    <section class="panel" aria-live="polite">
+      <div class="p-head" id="p-head"></div>
+      <div class="log" id="log"></div>
+      <div class="suggest" id="suggest"></div>
+      <form class="ask" id="ask">
+        <label for="q" class="sr" hidden>Pregunta</label>
+        <textarea id="q" rows="1" placeholder="Escribí una pregunta…"></textarea>
+        <button class="send" id="send" type="submit">Preguntar</button>
+      </form>
+    </section>
+  </main>
+</div>
+
+<script>
+const PERIODO = "Agosto 2026 (comparado con julio 2026). Hoy es 16/09/2026.";
+
+const AGENTS = [
+  {
+    id: "rd", name: "Agente R&D", mission: "detectar oportunidades de producto cruzando tendencias de consumo y crecimiento de segmentos",
+    tagline: "Tendencias y segmentos para el próximo lanzamiento.", systems: ["WGSN", "IQVia", "Moondesk"],
+    alerts: [
+      { sev: "warn", t: "Protección solar facial crece 19% y Caviahue tiene 3,2% de share" },
+      { sev: "info", t: "Anti-age crece 11%: sin presencia de la marca" }
+    ],
+    data: {
+      segmentos_mercado: { fuente: "IQVia", nota: "crecimiento interanual y share de Caviahue",
+        filas: [
+          { segmento: "Protección solar facial", crecimiento: "+19%", share_caviahue: "3,2%" },
+          { segmento: "Hidratantes reparadoras", crecimiento: "+14%", share_caviahue: "6,1%" },
+          { segmento: "Anti-age", crecimiento: "+11%", share_caviahue: "0% (sin presencia)" },
+          { segmento: "Dermolimpieza", crecimiento: "+8%", share_caviahue: "2,4%" },
+          { segmento: "Corporales", crecimiento: "+5%", share_caviahue: "11,8%" }
+        ] },
+      tendencias: { fuente: "WGSN", nota: "último reporte trimestral",
+        items: ["Cuidado de la barrera cutánea: reparar antes que tratar", "Protección solar diaria urbana: FPS cotidiano, texturas livianas", "Fórmulas minimalistas: pocos ingredientes, claims claros", "Ingredientes de origen mineral y termal: valor del origen"] },
+      proyectos_en_diseno: { fuente: "Moondesk", items: ["Serum Barrera: brief de diseño, lanzamiento previsto 1T 2027"] }
+    },
+    qa: [
+      ["¿Qué segmentos crecen y dónde no estamos?", "Crecimiento interanual por segmento y share de Caviahue [IQVia]:\n- **Protección solar facial**: +19%, share 3,2%\n- **Hidratantes reparadoras**: +14%, share 6,1%\n- **Anti-age**: +11%, **sin presencia**\n- **Dermolimpieza**: +8%, share 2,4%\n- **Corporales**: +5%, share 11,8% (nuestro segmento fuerte)\nRecomendación: el mayor potencial está en solar facial, donde ya tenemos marca y el segmento es el que más crece."],
+      ["¿Qué oportunidad de lanzamiento ves?", "Dos candidatos:\n- **Solar facial con color**: el segmento crece 19% [IQVia] y la protección urbana diaria es tendencia [WGSN]. Aprovecha la respuesta de FPS50.\n- **Serum de barrera**: une la tendencia más fuerte [WGSN] con las hidratantes reparadoras (+14%), y ya tiene brief en diseño [Moondesk].\nRecomendación: acelerar el Serum Barrera, que ya está en marcha, y evaluar el solar facial para 2027."],
+      ["¿Qué dicen las tendencias de consumo?", "Tendencias del último reporte trimestral [WGSN]:\n- **Cuidado de la barrera cutánea**: reparar antes que tratar\n- **Protección solar diaria urbana**: FPS cotidiano, texturas livianas\n- **Fórmulas minimalistas**: pocos ingredientes y claims claros\n- **Ingredientes de origen mineral y termal**: valor del origen\nRecomendación: la última se alinea con el origen patagónico de la marca y conviene reflejarla en la comunicación."]
+    ]
+  },
+  {
+    id: "comercial", name: "Agente Comercial", mission: "leer mercado, canal y fuerza de ventas: sell-in, sell-out, share por zona, productividad de visitadores y resultado de promociones",
+    tagline: "Mercado, canal y fuerza de ventas, todos los días.", systems: ["Tango", "IQVia", "Elvis", "Bonus Dermo", "Avanter", "Sell Out", "Grilla promocional"],
+    alerts: [
+      { sev: "crit", t: "AMBA: el share cae de 8,3% a 7,8%" },
+      { sev: "warn", t: "APM-05 Mendoza: 0,60 recetas por visita, la más baja" },
+      { sev: "info", t: "El ciclo de FPS50 movió +31% de sell-out" }
+    ],
+    data: {
+      zonas: { fuente: "Tango (sell-in), Sell Out (sell-out), IQVia (share)", unidades: "unidades agosto",
+        filas: [
+          { zona: "AMBA", sell_in: 48200, sell_out: 51900, share_jul: "8,3%", share_ago: "7,8%" },
+          { zona: "Córdoba", sell_in: 12400, sell_out: 11800, share_jul: "8,7%", share_ago: "9,1%" },
+          { zona: "Santa Fe", sell_in: 10100, sell_out: 10350, share_jul: "8,5%", share_ago: "8,4%" },
+          { zona: "Mendoza", sell_in: 6900, sell_out: 6100, share_jul: "6,0%", share_ago: "6,2%" },
+          { zona: "Patagonia", sell_in: 9800, sell_out: 10400, share_jul: "12,1%", share_ago: "12,6%" },
+          { zona: "NOA", sell_in: 5200, sell_out: 4300, share_jul: "5,3%", share_ago: "4,9%" }
+        ] },
+      visitadores: { fuente: "Elvis (visitas), Bonus Dermo (recetas)",
+        filas: [
+          { apm: "APM-01 AMBA Norte", visitas: 182, recetas_bonus: 214 },
+          { apm: "APM-02 AMBA Sur", visitas: 176, recetas_bonus: 121 },
+          { apm: "APM-03 Córdoba", visitas: 150, recetas_bonus: 168 },
+          { apm: "APM-04 Santa Fe", visitas: 141, recetas_bonus: 139 },
+          { apm: "APM-05 Mendoza", visitas: 128, recetas_bonus: 77 },
+          { apm: "APM-06 Patagonia", visitas: 133, recetas_bonus: 171 }
+        ] },
+      ciclo_promocional_agosto: { fuente: "Grilla promocional, Avanter, Sell Out",
+        filas: [
+          { producto: "Protector Solar FPS50 120ml", descuento: "15%", sell_out_vs_julio: "+31%" },
+          { producto: "Crema de Manos 50g", descuento: "10%", sell_out_vs_julio: "+4%" },
+          { producto: "Productos sin promoción (promedio)", descuento: "-", sell_out_vs_julio: "+2%" }
+        ] }
+    },
+    qa: [
+      ["¿Qué visitadores generan más recetas por visita?", "Cruzando visitas y bonos de agosto:\n- **APM-06 Patagonia**: 1,29 recetas por visita (133 visitas, 171 bonos) [Elvis] [Bonus Dermo]\n- **APM-01 AMBA Norte**: 1,18 (182 visitas, 214 bonos)\n- **APM-03 Córdoba**: 1,12 (150 visitas, 168 bonos)\nLos más bajos son **APM-05 Mendoza** con 0,60 y **APM-02 AMBA Sur** con 0,69.\nRecomendación: revisar el ruteo de APM-05 y APM-02 y cruzar qué médicos visitados no generan bonos."],
+      ["¿Dónde perdimos market share este mes?", "Share de agosto contra julio [IQVia]:\n- **AMBA**: 8,3% → 7,8% (−0,5 pp), la zona de mayor volumen\n- **NOA**: 5,3% → 4,9% (−0,4 pp)\n- **Santa Fe**: 8,5% → 8,4% (−0,1 pp)\nCrecimos en **Patagonia** (+0,5 pp) y **Córdoba** (+0,4 pp). En AMBA el sell-out (51.900 u) supera al sell-in (48.200 u), así que la caída no viene del canal [Tango] [Sell Out].\nRecomendación: foco de visita en AMBA Sur, que además tiene la productividad más baja de la zona."],
+      ["¿Funcionó el último ciclo promocional?", "Ciclo de agosto, sell-out contra julio [Sell Out] [Avanter]:\n- **Protector Solar FPS50** (15% de descuento): **+31%**\n- **Crema de Manos 50g** (10% de descuento): +4%\n- Productos sin promoción: +2% promedio\nEl descuento en manos casi no movió la venta.\nRecomendación: repetir el foco en FPS50 y cambiar el producto con descuento del 10% en el próximo ciclo [Grilla promocional]."]
+    ]
+  },
+  {
+    id: "finanzas", name: "Agente Finanzas", mission: "seguir ventas contra presupuesto, margen por canal, conciliación del e-commerce y cobranzas",
+    tagline: "Real contra presupuesto, margen por canal y caja.", systems: ["Tango", "Presupuesto anual", "Shopify", "Mercado Libre", "Mercado Pago", "Facturante"],
+    alerts: [
+      { sev: "crit", t: "Ventas de agosto −5,3% contra presupuesto" },
+      { sev: "warn", t: "37 órdenes online sin factura en Tango (ARS 4,1 M)" }
+    ],
+    data: {
+      ventas_por_canal_ars_millones: { fuente: "Tango (real), Presupuesto anual (plan)",
+        filas: [
+          { canal: "Droguerías", real: 820, presupuesto: 870, margen_contribucion: "38%" },
+          { canal: "Farmacias directas", real: 190, presupuesto: 200, margen_contribucion: "41%" },
+          { canal: "Web propia (Shopify)", real: 135, presupuesto: 120, margen_contribucion: "46%" },
+          { canal: "Mercado Libre", real: 95, presupuesto: 120, margen_contribucion: "29%" }
+        ], total_real: 1240, total_presupuesto: 1310 },
+      comisiones: { fuente: "Mercado Pago, Mercado Libre", mercado_libre: "14,2% (ARS 13,5 M en agosto)", mercado_pago: "4,5%" },
+      conciliacion_online: { fuente: "Shopify, Mercado Libre, Mercado Pago, Facturante vs Tango", ordenes_sin_factura_tango: 37, monto_ars_millones: 4.1, de_shopify: 29, de_mercado_libre: 8, ya_cobradas_en_mercado_pago: 22 },
+      cuentas_a_cobrar_vencidas_60_dias_ars_millones: { fuente: "Tango", total: 96, "Droguería A": 52, "Droguería B": 31, "Droguería C": 13 }
+    },
+    qa: [
+      ["¿Cómo venimos contra presupuesto?", "Ventas netas de agosto: **ARS 1.240 M** contra 1.310 M presupuestados (**−5,3%**) [Tango] [Presupuesto anual].\n- **Droguerías**: 820 vs 870 M (−50 M)\n- **Mercado Libre**: 95 vs 120 M (−25 M)\n- **Farmacias directas**: 190 vs 200 M (−10 M)\n- **Web propia**: 135 vs 120 M (**+15 M**)\nRecomendación: revisar con Comercial la caída en droguerías antes de ajustar la versión de septiembre del presupuesto."],
+      ["¿Cuánto ganamos realmente en Mercado Libre?", "En agosto Mercado Libre vendió **ARS 95 M** [Mercado Libre]. La comisión fue de 14,2% (13,5 M) y el margen de contribución quedó en **29%** [Tango].\nComparado con otros canales:\n- Web propia: 46%\n- Farmacias directas: 41%\n- Droguerías: 38%\nCada venta que pasa de Mercado Libre a la web propia suma unos 17 puntos de margen.\nRecomendación: usar Mercado Libre para captar clientes y derivar la recompra a la web propia."],
+      ["¿Qué ventas online no están conciliadas?", "Hay **37 órdenes** por **ARS 4,1 M** sin factura en Tango [Tango]:\n- 29 de Shopify [Shopify]\n- 8 de Mercado Libre [Mercado Libre]\n22 de esas órdenes ya están cobradas [Mercado Pago].\nRecomendación: emitir esta semana las facturas de las 22 órdenes cobradas [Facturante] y revisar las 15 restantes con E-commerce."]
+    ]
+  },
+  {
+    id: "operaciones", name: "Agente Operaciones", mission: "unificar el stock real entre Tango y depósitos, anticipar vencimientos y detectar quiebres en farmacias online",
+    tagline: "Una sola verdad de stock, del depósito a la góndola.", systems: ["Tango", "Disprofarma", "Ship Now", "Informe de stock online"],
+    alerts: [
+      { sev: "crit", t: "FPS50 sin stock en 23 de 60 farmacias online" },
+      { sev: "warn", t: "Stock real de FPS50: 1.400 u menos que en Tango" },
+      { sev: "info", t: "Lote L2311 de Crema de Pies vence el 30/11" }
+    ],
+    data: {
+      stock_unidades: { fuente: "Tango (teórico), Disprofarma y Ship Now (real)",
+        filas: [
+          { producto: "Protector Solar FPS50 120ml", tango: 11200, disprofarma: 8300, ship_now: 1500 },
+          { producto: "Crema Corporal 200g", tango: 30200, disprofarma: 27400, ship_now: 3600 },
+          { producto: "Emulsión Facial 50ml", tango: 4600, disprofarma: 3300, ship_now: 600 },
+          { producto: "Crema de Manos 50g", tango: 14500, disprofarma: 13100, ship_now: 1400 },
+          { producto: "Crema de Pies 100g", tango: 7300, disprofarma: 6500, ship_now: 700 },
+          { producto: "Gel Limpiador 150ml", tango: 5600, disprofarma: 5000, ship_now: 600 }
+        ] },
+      lotes_por_vencer: { fuente: "Disprofarma",
+        filas: [
+          { producto: "Crema de Pies 100g", lote: "L2311", unidades: 2100, vence: "30/11/2026" },
+          { producto: "Gel Limpiador 150ml", lote: "L2402", unidades: 900, vence: "15/12/2026" }
+        ] },
+      quiebres_farmacias_online: { fuente: "Informe de stock online (mail diario)", tiendas_relevadas: 60,
+        filas: [
+          { producto: "Protector Solar FPS50 120ml", tiendas_sin_stock: 23 },
+          { producto: "Emulsión Facial 50ml", tiendas_sin_stock: 11 }
+        ] }
+    },
+    qa: [
+      ["¿Dónde difiere el stock de Tango del real?", "Comparando Tango con los depósitos [Tango] [Disprofarma] [Ship Now]:\n- **Protector Solar FPS50**: Tango 11.200, real 9.800 → **−1.400 u**\n- **Emulsión Facial 50ml**: Tango 4.600, real 3.900 → **−700 u**\n- **Crema Corporal 200g**: Tango 30.200, real 31.000 → +800 u\nLos faltantes caen justo en los dos productos con quiebre.\nRecomendación: ajustar Tango con el stock real antes de confirmar el plan de producción."],
+      ["¿Qué lotes vencen pronto?", "Dos lotes vencen en los próximos 90 días [Disprofarma]:\n- **Crema de Pies 100g**, lote L2311: 2.100 u, vence el 30/11/2026\n- **Gel Limpiador 150ml**, lote L2402: 900 u, vence el 15/12/2026\nRecomendación: incluir Crema de Pies en la grilla de octubre y priorizar ambos lotes en los pedidos de farmacias de alta rotación."],
+      ["¿Dónde hay quiebres en farmacias online?", "Según el relevamiento diario de 60 tiendas online de farmacias [Informe de stock online]:\n- **Protector Solar FPS50**: sin stock en **23 tiendas** (38%)\n- **Emulsión Facial 50ml**: sin stock en 11 (18%)\nCoincide con el faltante de stock en depósito [Disprofarma].\nRecomendación: priorizar la reposición de FPS50 a las cadenas con mayor sell-out y avisar a Comercial."]
+    ]
+  },
+  {
+    id: "producto", name: "Agente Producto", mission: "seguir el estado del packaging y de los lanzamientos, y avisar qué los frena",
+    tagline: "Packaging y lanzamientos, sin perseguir aprobaciones.", systems: ["Moondesk", "Sell Out", "Informe de stock online"],
+    alerts: [
+      { sev: "crit", t: "Pomo nuevo de FPS50: 12 días trabado en aprobación" },
+      { sev: "info", t: "Crema Corporal 400ml: aprobada, en imprenta" }
+    ],
+    data: {
+      proyectos_packaging: { fuente: "Moondesk",
+        filas: [
+          { proyecto: "Protector Solar FPS50, pomo nuevo", estado: "En aprobación regulatoria", dias_en_estado: 12, lanzamiento: "01/11/2026" },
+          { proyecto: "Emulsión Facial, textos de claims", estado: "En revisión de Marketing", dias_en_estado: 4, lanzamiento: "-" },
+          { proyecto: "Crema Corporal 400ml", estado: "Aprobado, en imprenta", dias_en_estado: 2, lanzamiento: "15/10/2026" },
+          { proyecto: "Serum Barrera", estado: "Brief de diseño", dias_en_estado: 9, lanzamiento: "1T 2027" }
+        ] },
+      senales_de_otros_agentes: { fps50_sell_out_ciclo: "+31% (Sell Out)", fps50_quiebre_online: "23 de 60 tiendas (Informe de stock online)" }
+    },
+    qa: [
+      ["¿Qué packaging está demorado?", "**Protector Solar FPS50, pomo nuevo**: lleva **12 días** trabado en aprobación regulatoria [Moondesk]. El relanzamiento es el 01/11 y el producto ya tiene quiebres.\n**Emulsión Facial, textos de claims**: 4 días en revisión de Marketing [Moondesk].\nRecomendación: escalar hoy la aprobación del pomo de FPS50. Cada semana de demora achica el margen para imprimir antes del lanzamiento."],
+      ["¿Cómo está el pipeline de lanzamientos?", "- **Crema Corporal 400ml**: aprobado, en imprenta, lanza el 15/10 [Moondesk]\n- **Emulsión Facial (claims nuevos)**: en revisión de Marketing, 4 días\n- **FPS50 pomo nuevo**: en aprobación regulatoria hace 12 días, lanza el 01/11\n- **Serum Barrera**: brief de diseño, 1T 2027\nRecomendación: el único proyecto con riesgo de fecha es FPS50."],
+      ["¿Qué conviene priorizar?", "**FPS50**, porque reúne las tres señales:\n- Es el producto con mejor respuesta promocional: +31% de sell-out [Sell Out]\n- Tiene quiebre en 38% de las tiendas online [Informe de stock online]\n- Su packaging nuevo está trabado hace 12 días [Moondesk]\nRecomendación: armar un equipo corto de Producto, Regulatorio y Producción para destrabar el pomo y asegurar el lote de octubre."]
+    ]
+  },
+  {
+    id: "legal", name: "Agente Riesgo y Legal", mission: "vigilar contratos, registros regulatorios, datos personales y exposición de crédito",
+    tagline: "Contratos, registros, datos personales y crédito.", systems: ["Contratos", "Registros regulatorios", "Bonus Dermo", "Tango", "Avanter"],
+    alerts: [
+      { sev: "crit", t: "Preaviso a Droguería B antes del 01/10" },
+      { sev: "warn", t: "Bonus Dermo: 2 usuarios externos sin acceso por rol" },
+      { sev: "warn", t: "ARS 96 M vencidos a más de 60 días" }
+    ],
+    data: {
+      contratos: { fuente: "Contratos", filas: [{ contraparte: "Droguería B", tipo: "Distribución", vence: "31/10/2026", renovacion: "automática", preaviso: "30 días (antes del 01/10/2026)" }] },
+      registros: { fuente: "Registros regulatorios", filas: [{ producto: "Emulsión Facial 50ml", certificado_vence: "20/01/2027", iniciar_renovacion_antes_de: "22/10/2026" }] },
+      datos_personales: { fuente: "Bonus Dermo", contenido: "datos de médicos y pacientes, alcanzados por la Ley 25.326", usuarios_externos_sin_acceso_por_rol: 2 },
+      credito: { fuente: "Tango", vencido_mas_60_dias_ars_millones: { total: 96, "Droguería A": 52, "Droguería B": 31, "Droguería C": 13 } },
+      liquidaciones_observadas: { fuente: "Avanter", cantidad: 3, monto_ars_millones: 1.8, antiguedad: "más de 45 días" }
+    },
+    qa: [
+      ["¿Qué vencimientos tengo en los próximos 60 días?", "- **Contrato con Droguería B**: vence el 31/10 con renovación automática. Para renegociar hay que dar **preaviso antes del 01/10** [Contratos]\n- **Registro de Emulsión Facial**: vence el 20/01/2027. Conviene iniciar la renovación **antes del 22/10** [Registros regulatorios]\nRecomendación: definir esta semana si se renegocia con Droguería B, que además tiene ARS 31 M vencidos [Tango]."],
+      ["¿Qué riesgos de datos personales hay?", "**Bonus Dermo** guarda datos de médicos y pacientes, alcanzados por la Ley 25.326 [Bonus Dermo]. Hoy hay **2 usuarios externos sin acceso por rol** configurado.\nRecomendación: restringir esos accesos antes de conectar Bonus Dermo a cualquier agente. Es parte del checklist de Puerta Segura."],
+      ["¿Qué exposición de crédito tenemos?", "Cuentas a cobrar vencidas a más de 60 días: **ARS 96 M** [Tango]\n- Droguería A: 52 M\n- Droguería B: 31 M\n- Droguería C: 13 M\nAdemás hay 3 liquidaciones de descuentos observadas por ARS 1,8 M, abiertas hace más de 45 días [Avanter].\nRecomendación: condicionar la renovación con Droguería B a un plan de pago."]
+    ]
+  },
+  {
+    id: "produccion", name: "Agente Producción", mission: "comparar stock real, demanda proyectada y plan de producción en plantas de terceros, y sugerir órdenes",
+    tagline: "Plan de producción alineado a la demanda y la promoción.", systems: ["Capataz", "Grilla promocional", "Disprofarma"],
+    alerts: [
+      { sev: "crit", t: "FPS50: faltan 4.200 u para septiembre y octubre" },
+      { sev: "warn", t: "Emulsión Facial: faltan 1.600 u" },
+      { sev: "info", t: "Crema Corporal: unas 17.000 u de sobrestock" }
+    ],
+    data: {
+      plan_sep_oct_unidades: { fuente: "Capataz (demanda y plan), Disprofarma y Ship Now (stock real), Grilla promocional (foco de octubre: FPS50 y Emulsión Facial)",
+        filas: [
+          { producto: "Protector Solar FPS50 120ml", stock_real: 9800, plan_produccion: 12000, demanda_proyectada: 26000 },
+          { producto: "Crema Corporal 200g", stock_real: 31000, plan_produccion: 8000, demanda_proyectada: 22000 },
+          { producto: "Crema de Manos 50g", stock_real: 14500, plan_produccion: 0, demanda_proyectada: 11000 },
+          { producto: "Emulsión Facial 50ml", stock_real: 3900, plan_produccion: 4000, demanda_proyectada: 9500 },
+          { producto: "Crema de Pies 100g", stock_real: 7200, plan_produccion: 2000, demanda_proyectada: 5100 },
+          { producto: "Gel Limpiador 150ml", stock_real: 5600, plan_produccion: 0, demanda_proyectada: 4800 }
+        ] },
+      lead_time_plantas: "6 semanas",
+      regla: "Las órdenes de producción requieren aprobación de Dirección"
+    },
+    qa: [
+      ["¿Alcanza el plan de producción para el próximo ciclo?", "No para dos productos, con stock real y demanda proyectada de septiembre y octubre [Capataz] [Grilla promocional]:\n- **Protector Solar FPS50**: stock 9.800 + plan 12.000 contra demanda de 26.000 → **faltan 4.200 u**\n- **Emulsión Facial 50ml**: 3.900 + 4.000 contra 9.500 → **faltan 1.600 u**\nEl resto de la línea está cubierto.\nRecomendación: con 6 semanas de lead time, emitir las órdenes adicionales antes del 25/09."],
+      ["¿Qué producto tiene sobrestock?", "**Crema Corporal 200g**: 31.000 u en stock más un lote planificado de 8.000, contra una demanda de 22.000 [Capataz]. Sobran unas **17.000 u**, más de un mes y medio de venta.\nCrema de Manos también queda holgada: 14.500 u contra 11.000 de demanda.\nRecomendación: postergar el lote de 8.000 de Crema Corporal y usar esa capacidad para FPS50."],
+      ["¿Qué órdenes conviene emitir esta semana?", "Dos órdenes sugeridas, con colchón de seguridad [Capataz]:\n- **Protector Solar FPS50**: 6.000 u (faltante de 4.200 más margen por el foco promocional de octubre)\n- **Emulsión Facial 50ml**: 2.000 u (faltante de 1.600)\nY una postergación: el lote de 8.000 u de **Crema Corporal 200g**.\nRecomendación: aprobar las órdenes y validar capacidad de planta antes del 25/09. Requiere aprobación de Dirección."]
+    ]
+  },
+  {
+    id: "marketing", name: "Agente Marketing", mission: "medir el retorno de cada acción, controlar el presupuesto de marketing y conectar tendencias con campañas",
+    tagline: "Inversión, retorno y campañas conectadas al mercado.", systems: ["Presupuesto de marketing", "Shopify", "WGSN", "IQVia"],
+    alerts: [
+      { sev: "warn", t: "Influencers: 25% sobre plan y retorno de 1,4x" },
+      { sev: "info", t: "Google Ads rinde 3,3x" }
+    ],
+    data: {
+      inversion_agosto_ars_millones: { fuente: "Presupuesto de marketing (plan y real), Shopify (venta online atribuida)",
+        filas: [
+          { accion: "Google Ads", real: 18.5, plan: 18, venta_online_atribuida: 61 },
+          { accion: "Meta", real: 22, plan: 20, venta_online_atribuida: 48 },
+          { accion: "Influencers", real: 15, plan: 12, venta_online_atribuida: 21 },
+          { accion: "Material punto de venta", real: 9, plan: 10, venta_online_atribuida: "no atribuible" }
+        ], total_real: 64.5, total_plan: 60 },
+      tendencia_clave: { fuente: "WGSN", item: "Cuidado de la barrera cutánea; protección solar urbana diaria" },
+      segmento: { fuente: "IQVia", item: "Hidratantes reparadoras +14% interanual, share Caviahue 6,1%" }
+    },
+    qa: [
+      ["¿Qué acción de marketing rinde más?", "Retorno de agosto (venta online atribuida sobre inversión) [Presupuesto de marketing] [Shopify]:\n- **Google Ads**: 3,3x (ARS 18,5 M → 61 M)\n- **Meta**: 2,2x (22 M → 48 M)\n- **Influencers**: 1,4x (15 M → 21 M)\nEl material de punto de venta no tiene venta online atribuible.\nRecomendación: mover parte de la inversión en influencers a Google Ads durante el próximo ciclo."],
+      ["¿Cómo vamos contra el presupuesto de marketing?", "En agosto se gastaron **ARS 64,5 M** contra 60 M presupuestados (**+7,5%**) [Presupuesto de marketing].\n- **Influencers**: 15 M vs 12 M (+25%), el mayor desvío\n- **Meta**: 22 M vs 20 M (+10%)\n- **Google Ads**: 18,5 M vs 18 M (+3%)\n- **Material POP**: 9 M vs 10 M (−10%)\nRecomendación: congelar nuevas contrataciones de influencers hasta cerrar septiembre dentro del plan."],
+      ["¿Qué tendencia deberíamos aprovechar?", "La más alineada con el portfolio es el **cuidado de la barrera cutánea** [WGSN]. Las hidratantes reparadoras crecen **14% interanual** y Caviahue tiene **6,1%** de share en ese segmento [IQVia].\nTambién crece la **protección solar urbana diaria**, y FPS50 ya respondió bien al último ciclo.\nRecomendación: campaña de la línea corporal y facial con mensaje de barrera para el ciclo de octubre."]
+    ]
+  }
+];
+
+const CEO = {
+  id: "ceo", name: "CEO · Centro de decisión", mission: "integrar lo que ven todos los agentes y priorizar decisiones para la dirección general",
+  tagline: "Lo que requiere decisión hoy, según los ocho agentes.", systems: ["Todos los agentes"],
+  alerts: [
+    { sev: "crit", t: "Riesgo transversal: quiebre de FPS50 en el ciclo de octubre" },
+    { sev: "warn", t: "3 decisiones con fecha esta semana" }
+  ],
+  qa: [
+    ["Dame el brief del día", "**Brief de dirección, 16/09**\n- **Ventas**: agosto cerró en ARS 1.240 M, −5,3% contra presupuesto, con el mayor desvío en droguerías [Agente Finanzas]\n- **Share**: AMBA cayó 0,5 pp, a 7,8% [Agente Comercial]\n- **FPS50**: la promo funcionó (+31%), pero hay quiebre en 38% de las tiendas online y faltan 4.200 u para octubre [Agente Operaciones] [Agente Producción]\n- **Packaging de FPS50**: 12 días trabado en aprobación [Agente Producto]\n- **Legal**: preaviso a Droguería B antes del 01/10, con 31 M vencidos [Agente Riesgo y Legal]\nRecomendación: la decisión de la semana es asegurar FPS50, con orden adicional y packaging aprobado."],
+    ["¿Qué decisiones tengo que tomar esta semana?", "- **Aprobar las órdenes adicionales**: FPS50 (6.000 u) y Emulsión Facial (2.000 u), antes del 25/09 [Agente Producción]\n- **Definir la renovación con Droguería B** antes del preaviso del 01/10 [Agente Riesgo y Legal]\n- **Escalar la aprobación del pomo de FPS50**, trabado hace 12 días [Agente Producto]\n- **Reasignar inversión**: influencers está 25% sobre plan y rinde 1,4x [Agente Marketing]\nRecomendación: empezar por las órdenes y el pomo de FPS50, que afectan la venta de octubre."],
+    ["¿Cuál es el mayor riesgo del mes?", "**Quedarnos sin FPS50 en pleno ciclo de octubre.** Coinciden cinco señales:\n- Faltan 4.200 u en el plan [Agente Producción]\n- El stock real es 1.400 u menor que el de Tango [Agente Operaciones]\n- Hay quiebre en 23 de 60 tiendas online [Agente Operaciones]\n- El pomo nuevo está trabado en aprobación [Agente Producto]\n- Es el producto con mejor respuesta comercial, +31% [Agente Comercial]\nRecomendación: tratarlo hoy como prioridad transversal entre Producción, Producto y Comercial."]
+  ]
+};
+CEO.data = Object.fromEntries(AGENTS.map(a => [a.name, { alertas: a.alerts.map(x => x.t), datos: a.data }]));
+
+const ALL = [...AGENTS, CEO];
+const byId = Object.fromEntries(ALL.map(a => [a.id, a]));
+const threads = Object.fromEntries(ALL.map(a => [a.id, []]));
+
+let sample = null;
+let mode = "pending";
+let current = "comercial";
+let busy = null;
+
+const $ = s => document.querySelector(s);
+const stage = $("#stage"), wires = $("#wires"), log = $("#log"), suggest = $("#suggest"), q = $("#q"), sendBtn = $("#send");
+
+/* ---------- Sala ---------- */
+function buildRoom() {
+  const n = AGENTS.length;
+  const cx = 50, cy = 80, rx = 40, ry = 62;
+  AGENTS.forEach((a, i) => {
+    const ang = Math.PI - (i * Math.PI) / (n - 1);
+    const x = cx + rx * Math.cos(ang);
+    const y = cy - ry * Math.sin(ang) + (i === 0 || i === n - 1 ? -6 : 0);
+    a.pos = { x, y };
+    const b = document.createElement("button");
+    b.className = "node"; b.type = "button"; b.dataset.id = a.id;
+    b.style.setProperty("--x", x + "%"); b.style.setProperty("--y", y + "%");
+    b.innerHTML = `<span class="sphere" style="--d:${(i * 0.45).toFixed(2)}s"></span><div><span class="node-name"></span><span class="node-state"><b>${a.alerts.length}</b> alertas</span></div>`;
+    b.querySelector(".node-name").textContent = a.name.replace("Agente ", "");
+    b.addEventListener("click", () => select(a.id));
+    stage.appendChild(b);
+    const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    ln.setAttribute("x1", cx); ln.setAttribute("y1", cy); ln.setAttribute("x2", x); ln.setAttribute("y2", y);
+    ln.dataset.id = a.id;
+    wires.appendChild(ln);
+  });
+  const c = document.createElement("button");
+  c.className = "ceo"; c.type = "button"; c.dataset.id = "ceo";
+  c.innerHTML = `<span class="desk">CEO</span><div><small>Centro de decisión</small><span class="node-state">Brief del día</span></div>`;
+  c.addEventListener("click", () => select("ceo"));
+  stage.appendChild(c);
+}
+
+/* ---------- Panel ---------- */
+function esc(s) { return s.replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])); }
+function inline(s) {
+  return esc(s)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\[([^\[\]]{2,40})\]/g, '<span class="src">$1</span>');
+}
+function render(text) {
+  const lines = text.split(/\n/);
+  let html = "", list = false;
+  for (const raw of lines) {
+    const line = raw.trim();
+    if (!line) { if (list) { html += "</ul>"; list = false; } continue; }
+    const m = line.match(/^(?:[-•*]|\d+\.)\s+(.*)$/);
+    if (m) { if (!list) { html += "<ul>"; list = true; } html += `<li>${inline(m[1])}</li>`; continue; }
+    if (list) { html += "</ul>"; list = false; }
+    if (/^recomendaci[oó]n\s*:/i.test(line)) html += `<p class="rec">${inline(line)}</p>`;
+    else html += `<p>${inline(line)}</p>`;
+  }
+  if (list) html += "</ul>";
+  return html;
+}
+
+function select(id) {
+  if (busy) return;
+  current = id;
+  const a = byId[id];
+  document.querySelectorAll(".node, .ceo").forEach(el => el.setAttribute("aria-pressed", String(el.dataset.id === id)));
+  wires.querySelectorAll("line").forEach(l => l.classList.toggle("on", id === "ceo" || l.dataset.id === id));
+  $("#p-head").innerHTML = `<span class="p-dot ${id === "ceo" ? "ceo-dot" : ""}"></span><h2></h2><p></p><div class="sys"></div>`;
+  $("#p-head h2").textContent = a.name;
+  $("#p-head p").textContent = a.tagline;
+  const sys = $("#p-head .sys");
+  a.systems.forEach(s => { const sp = document.createElement("span"); sp.textContent = s; sys.appendChild(sp); });
+  q.placeholder = `Preguntale al ${a.name.split(" · ")[0].replace("Agente ", "Agente ")}…`;
+  drawLog();
+  drawSuggest();
+}
+
+function drawLog() {
+  const a = byId[current];
+  log.innerHTML = "";
+  const intro = document.createElement("div");
+  intro.className = "alerts";
+  intro.innerHTML = `<span class="eyebrow">Hoy detectó</span>`;
+  a.alerts.forEach(al => {
+    const d = document.createElement("div");
+    d.className = "alert " + al.sev;
+    d.innerHTML = "<i></i><span></span>";
+    d.querySelector("span").textContent = al.t;
+    intro.appendChild(d);
+  });
+  log.appendChild(intro);
+  threads[current].forEach(m => log.appendChild(bubble(m)));
+  log.scrollTop = log.scrollHeight;
+}
+
+function bubble(m) {
+  const d = document.createElement("div");
+  d.className = "msg " + (m.role === "user" ? "user" : "agent");
+  if (m.role === "user") { d.textContent = m.content; return d; }
+  d.innerHTML = `<div class="who"></div><div class="body"></div>`;
+  d.querySelector(".who").textContent = byId[current].name;
+  const body = d.querySelector(".body");
+  if (m.pending && !m.content) body.innerHTML = `<p class="thinking">Consultando sistemas…</p>`;
+  else body.innerHTML = render(m.content);
+  if (m.note) { const n = document.createElement("p"); n.className = "note"; n.textContent = m.note; d.appendChild(n); }
+  m.el = body;
+  return d;
+}
+
+function drawSuggest() {
+  suggest.innerHTML = "";
+  byId[current].qa.forEach(([question]) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "chip"; b.textContent = question; b.disabled = !!busy;
+    b.addEventListener("click", () => ask(question));
+    suggest.appendChild(b);
+  });
+}
+
+/* ---------- Preguntar ---------- */
+function rules(a) {
+  const isCeo = a.id === "ceo";
+  return `Sos ${a.name} de Laboratorio Copahue (marca Caviahue, dermocosmética argentina), ${isCeo ? "el centro de decisión que integra a los ocho agentes verticales" : "un agente vertical de la sala 24/7 AI Ready"}. Tu función: ${a.mission}.
+Período: ${PERIODO}
+Trabajás SOLO con los datos de abajo. Son datos simulados de demostración, pero respondé como si fueran los reales de la empresa.
+Reglas:
+- Español rioplatense, tono ejecutivo, directo. Máximo 120 palabras.
+- Usá números concretos de los datos.
+- Citá la fuente entre corchetes después de cada dato, con el nombre exacto ${isCeo ? "del agente, por ejemplo [Agente Comercial]" : "del sistema, por ejemplo [Tango] o [IQVia]"}.
+- Si piden algo que no está en los datos, decilo en una línea y sugerí qué sistema habría que conectar. No inventes datos.
+- Formato: líneas cortas, viñetas con "- ", **negrita** para lo clave. Sin títulos con #.
+- Terminá siempre con una línea que empiece con "Recomendación:".
+- Toda acción con impacto (órdenes, descuentos, notas de crédito, contratos) es una recomendación que aprueba una persona.
+
+DATOS:
+${JSON.stringify(a.data)}`;
+}
+
+function canned(a, question) {
+  const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ¿?¡!.,]/g, "").trim();
+  const hit = a.qa.find(([qq]) => norm(qq) === norm(question));
+  return hit ? hit[1] : null;
+}
+
+async function ask(question) {
+  question = question.trim();
+  if (!question || busy) return;
+  const a = byId[current];
+  const id = current;
+  const thread = threads[id];
+  const history = thread.filter(m => !m.pending && !m.failed).slice(-8).map(m => ({ role: m.role, content: m.content }));
+  thread.push({ role: "user", content: question });
+  const reply = { role: "assistant", content: "", pending: true };
+  thread.push(reply);
+  q.value = "";
+  setBusy(new AbortController());
+  drawLog();
+
+  const show = text => { reply.content = text; if (current === id && reply.el) { reply.el.innerHTML = render(text); log.scrollTop = log.scrollHeight; } };
+
+  try {
+    if (sample && mode === "live") {
+      await sample([{ role: "user", content: rules(a) }, ...history, { role: "user", content: question }], {
+        modelTier: "quick", cache: false, signal: busy.signal, onText: ({ text }) => show(text)
+      });
+    } else {
+      await scripted(a, question, show, busy.signal);
+    }
+  } catch (e) {
+    const code = e && e.code;
+    if (code === "cancelled") {
+      reply.content = e.text || reply.content || "Consulta detenida.";
+    } else if (["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"].includes(code)) {
+      setMode("script");
+      const c = canned(a, question);
+      reply.content = c || "La IA en vivo no está habilitada en esta vista. Probá con una de las preguntas sugeridas.";
+      if (c) reply.note = "Respuesta preparada: la IA en vivo no está habilitada en esta vista.";
+    } else if (code === "rate_limited") {
+      reply.content = e.text || ""; reply.note = "Se alcanzó el límite de consultas por un momento. Esperá unos segundos y volvé a preguntar.";
+      if (!reply.content) reply.failed = true;
+    } else if (code === "refused") {
+      reply.content = ""; reply.failed = true; reply.note = "No pude responder esa pregunta. Probá reformularla sobre los datos del área.";
+    } else if (code === "session_expired") {
+      reply.failed = true; reply.note = "La sesión expiró. Volvé a iniciar sesión en Claude y recargá la demo.";
+    } else {
+      reply.content = e?.text || ""; reply.note = "Se cortó la conexión. Volvé a preguntar.";
+      if (!reply.content) reply.failed = true;
+    }
+  } finally {
+    reply.pending = false;
+    setBusy(null);
+    if (current === id) drawLog();
+  }
+}
+
+function scripted(a, question, show, signal) {
+  const text = canned(a, question) || "Esta vista funciona con respuestas preparadas para las preguntas sugeridas. Abrí la demo desde Claude para hacer preguntas libres sobre los datos.";
+  return new Promise((resolve, reject) => {
+    const words = text.split(/(\s+)/);
+    let i = 0;
+    const start = setTimeout(function tick() {
+      if (signal.aborted) return reject({ code: "cancelled", text: words.slice(0, i).join("") });
+      i = Math.min(words.length, i + 3);
+      show(words.slice(0, i).join(""));
+      if (i >= words.length) return resolve();
+      setTimeout(tick, 28);
+    }, 650);
+    signal.addEventListener("abort", () => { clearTimeout(start); }, { once: true });
+  });
+}
+
+function setBusy(ctl) {
+  busy = ctl;
+  sendBtn.textContent = ctl ? "Detener" : "Preguntar";
+  sendBtn.classList.toggle("stop", !!ctl);
+  suggest.querySelectorAll(".chip").forEach(c => c.disabled = !!ctl);
+}
+
+function setMode(m) {
+  mode = m;
+  const pill = $("#mode");
+  pill.classList.toggle("live", m === "live");
+  pill.classList.toggle("script", m === "script");
+  $("#mode-text").textContent = m === "live" ? "IA en vivo" : m === "script" ? "Respuestas preparadas" : "Conectando…";
+}
+
+$("#ask").addEventListener("submit", e => {
+  e.preventDefault();
+  if (busy) { busy.abort(); return; }
+  ask(q.value);
+});
+q.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); if (!busy) ask(q.value); }
+});
+
+buildRoom();
+select("comercial");
+
+if (window.claude && typeof window.claude.use === "function") {
+  window.claude.use("sample").then(s => { sample = s; setMode(s ? "live" : "script"); }).catch(() => setMode("script"));
+} else {
+  setMode("script");
+}
+</script>

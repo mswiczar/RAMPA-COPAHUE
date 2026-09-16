@@ -1,0 +1,14 @@
+{
+  "name": "sala247-copahue",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Sala 24/7 de Laboratorio Copahue: CEO y agentes verticales (mockup)",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "setup": "npm --prefix server install && npm --prefix web install",
+    "build": "npm --prefix web run build",
+    "start": "npm --prefix server start",
+    "dev:server": "npm --prefix server run dev",
+    "dev:web": "npm --prefix web run dev"
+  }
+}
