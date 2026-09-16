@@ -110,9 +110,14 @@ export function parseSchedule(t) {
 }
 
 export function titleFrom(type, instruction) {
+  const W = "[\\wáéíóúñ]+";
   let s = String(instruction).trim()
-    .replace(/^(por favor|che|necesito que|quiero que)\s+/i, "")
+    .replace(/^(por favor|che|necesito que|quiero que)[,\s]+/i, "")
+    .replace(new RegExp(`^(todos los ${W}|todas las ${W}|cada ${W}(?: ${W})?|de lunes a viernes|los días hábiles)(?:\\s+a las \\d{1,2}(?:[:.]\\d{2})?)?[,\\s]+`, "i"), "")
+    .replace(new RegExp(`^(pedile|pedíle|decile|avisale)\\s+al?\\s+(?:agente\\s+(?:de\\s+)?)?${W}(?:\\s+y\\s+${W})?\\s+(?:que\\s+)?`, "i"), "")
     .replace(/\s+(todos los|todas las|cada)\s.*$/i, "")
+    .replace(/\s+y\s+(mand|envi|avis)[\wáéíóú]*\s.*$/i, "")
+    .replace(/^(un|una)\s+/i, "")
     .replace(/[.!?]+$/, "");
   s = s.charAt(0).toUpperCase() + s.slice(1);
   return s.length > 70 ? s.slice(0, 67).trimEnd() + "…" : s || TYPES[type];

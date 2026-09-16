@@ -1,6 +1,9 @@
+import { useFetch } from "../live.jsx";
+
 export default function Room({ agents, selected }) {
   const ring = agents.filter((a) => a.id !== "ceo");
   const ceo = agents.find((a) => a.id === "ceo");
+  const current = agents.find((a) => a.id === selected) || ceo;
   const n = ring.length;
   const cx = 50, cy = 80, rx = 40, ry = 62;
   const nodes = ring.map((a, i) => {
@@ -46,11 +49,37 @@ export default function Room({ agents, selected }) {
           </a>
         )}
       </div>
-      <div className="room-foot">
-        <div><b>Acceso permanente</b><span>Tango, IQVia, Elvis, Capataz y más.</span></div>
-        <div><b>Conocimiento acumulativo</b><span>Cada respuesta cita su sistema de origen.</span></div>
-        <div><b>Activo propio</b><span>Los agentes quedan en Copahue.</span></div>
-      </div>
+      {current && <Knowledge agent={current} />}
     </section>
+  );
+}
+
+function Knowledge({ agent }) {
+  const isCeo = agent.id === "ceo";
+  const { data: deliverables } = useFetch(`/api/deliverables${isCeo ? "" : `?agentId=${agent.id}`}`);
+  const { data: messages } = useFetch(`/api/agents/${agent.id}/messages`);
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  return (
+    <div className="room-foot" aria-live="polite">
+      <div>
+        <b>Fuentes · {agent.short}</b>
+        <span>{agent.systems.join(", ")}</span>
+      </div>
+      <div>
+        <b>Conocimiento acumulado</b>
+        <span>
+          {deliverables ? plural(deliverables.length, "entregable", "entregables") : "…"}
+          {" · "}
+          {messages ? plural(messages.length, "mensaje", "mensajes") : "…"}
+          {isCeo && " (toda la sala)"}
+        </span>
+      </div>
+      <div>
+        <b>Trabajo</b>
+        <span>
+          {agent.activeTasks} en curso · {agent.pendingApprovals} por aprobar · {plural(agent.schedules, "programación", "programaciones")}
+        </span>
+      </div>
+    </div>
   );
 }

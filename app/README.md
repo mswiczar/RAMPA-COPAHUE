@@ -57,8 +57,9 @@ Variables de entorno:
 | --- | --- | --- |
 | `PORT` | `8080` | Puerto HTTP |
 | `DATA_DIR` | `server/data` | Dónde se guarda `db.json` |
-| `APP_PASSWORD` | — | Si está definida, pide usuario y contraseña (Basic Auth) |
-| `APP_USER` | `ceo` | Usuario para Basic Auth |
+| `APP_PASSWORD` | — | Si está definida, la app muestra una página de login |
+| `SESSION_SECRET` | aleatorio al arrancar | Firma de la cookie de sesión (definirla para que las sesiones sobrevivan reinicios) |
+| `APP_USER` | `ceo` | Usuario del login |
 | `APP_TZ` | `America/Argentina/Buenos_Aires` | Zona horaria de las programaciones |
 
 Para volver a los datos iniciales, borrar `server/data/db.json` y reiniciar.

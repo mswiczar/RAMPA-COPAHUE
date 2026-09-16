@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFetch } from "./live.jsx";
 import Room from "./components/Room.jsx";
 import AgentPanel from "./components/AgentPanel.jsx";
@@ -18,11 +18,21 @@ function useRoute() {
   return route;
 }
 
-export default function App() {
+export default function App({ user, onLogout }) {
   const [view, param] = useRoute();
   const { data: agents } = useFetch("/api/agents");
   const { data: summary } = useFetch("/api/summary");
   const agentId = view === "sala" ? param || "ceo" : null;
+
+  // En pantallas angostas el panel queda debajo de la sala: llevarlo a la vista al cambiar de agente.
+  const firstAgent = useRef(true);
+  useEffect(() => {
+    if (!agentId) return;
+    if (firstAgent.current) { firstAgent.current = false; return; }
+    if (window.matchMedia("(max-width: 900px)").matches) {
+      document.querySelector(".panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [agentId]);
 
   const nav = [
     ["sala", "Sala"],
@@ -53,6 +63,7 @@ export default function App() {
         <div className="top-meta">
           {summary && <span className="pill"><i className="dot live" />{summary.runningTasks} en curso · {summary.activeSchedules} programaciones</span>}
           <span className="pill">Datos simulados</span>
+          <button className="btn small ghost" type="button" onClick={onLogout} title={`Sesión: ${user}`}>Salir</button>
         </div>
       </header>
 

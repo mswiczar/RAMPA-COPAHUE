@@ -262,12 +262,37 @@ code.cell-sub { font-size: 11.5px; }
 .mail-head dd { margin: 0; }
 .mail-body { white-space: pre-wrap; font-family: var(--sans); font-size: 14px; line-height: 1.6; margin: 0 0 18px; }
 
+/* ---------- Login ---------- */
+.login { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 32px 16px;
+  background: radial-gradient(ellipse 50% 40% at 50% 38%, rgba(212, 176, 106, 0.09), transparent 70%), var(--ground); }
+.login-orbs { display: flex; align-items: center; gap: 18px; }
+.login-orbs .sphere { width: 38px; height: 38px; }
+.login-orbs .sphere::after { inset: -5px; }
+.login-orbs .desk { width: 58px; height: 58px; font-size: 13px; }
+.login-card { width: 100%; max-width: 380px; background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 26px 26px 20px; }
+.login-card h1 { font-size: 32px; margin: 4px 0 6px; }
+.login-card p { margin: 0; }
+.login-btn { justify-content: center; padding: 10px 14px; }
+
 /* ---------- Responsive ---------- */
-@media (max-width: 1080px) {
+@media (max-width: 1180px) {
+  .sala { grid-template-columns: minmax(0, 1fr) minmax(320px, 0.95fr); gap: 14px; }
+  .stage { aspect-ratio: 1 / 1.05; }
+  .node { width: 90px; gap: 4px; }
+  .node-name { font-size: 11.5px; }
+  .node-state { font-size: 10.5px; }
+  .sphere { width: 46px; height: 46px; }
+  .sphere::after { inset: -5px; }
+  .room-foot { grid-template-columns: 1fr; gap: 6px; }
+  .desk { width: 76px; height: 76px; font-size: 17px; }
+}
+@media (max-width: 900px) {
   .sala { grid-template-columns: 1fr; }
   .room { position: static; }
-  .panel { height: auto; min-height: 0; }
+  .panel { height: auto; min-height: 0; scroll-margin-top: 70px; }
   .log { max-height: 60vh; }
+}
+@media (max-width: 1080px) {
   .split { grid-template-columns: 1fr; }
   .list { position: static; max-height: 320px; }
 }

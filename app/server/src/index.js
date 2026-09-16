@@ -1,7 +1,7 @@
 import express from "express";
 import path from "node:path";
 import fs from "node:fs";
-import crypto from "node:crypto";
+import * as auth from "./auth.js";
 import { fileURLToPath } from "node:url";
 import { db, bus, load, newId, now, changed, HttpError } from "./store.js";
 import { ALL, byId } from "./agents.js";
@@ -14,18 +14,12 @@ const PORT = Number(process.env.PORT || 8080);
 const PUBLIC_DIR = process.env.PUBLIC_DIR || path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../public");
 
 const app = express();
+app.set("trust proxy", "loopback");
 app.use(express.json({ limit: "200kb" }));
 
-// Acceso protegido opcional: APP_USER / APP_PASSWORD
-if (process.env.APP_PASSWORD) {
-  const expected = Buffer.from(`${process.env.APP_USER || "ceo"}:${process.env.APP_PASSWORD}`);
-  app.use((req, res, next) => {
-    if (req.path === "/api/health") return next();
-    const given = Buffer.from(Buffer.from((req.headers.authorization || "").replace(/^Basic /, ""), "base64").toString());
-    if (given.length === expected.length && crypto.timingSafeEqual(given, expected)) return next();
-    res.set("WWW-Authenticate", 'Basic realm="Sala 24/7 Copahue", charset="UTF-8"').status(401).send("Acceso restringido");
-  });
-}
+// Login con página propia (APP_USER / APP_PASSWORD / SESSION_SECRET)
+auth.routes(app);
+app.use(auth.requireSession);
 
 const wrap = (fn) => (req, res, next) => Promise.resolve(fn(req, res)).then((out) => out !== undefined && res.json(out)).catch(next);
 const agentOr404 = (id) => { const a = byId[id]; if (!a) throw new HttpError(404, "No existe ese agente"); return a; };
@@ -99,7 +93,7 @@ app.post("/api/agents/:id/messages", wrap(async (req) => {
     const { agentId, type, instruction, recipients, schedule } = result.intent;
     const s = scheduler.create({ agentId, type, name: brain.titleFrom(type, instruction), instruction, recipients, cron: schedule.cron });
     const when = s.nextRunAt ? new Intl.DateTimeFormat("es-AR", { timeZone: scheduler.TZ, dateStyle: "full", timeStyle: "short" }).format(new Date(s.nextRunAt)) : "—";
-    reply.content = `Programado para **${schedule.label}**: ${s.name} (${brain.TYPES[type]}, cron \`${s.cron}\`).\n\nPróxima ejecución: ${when}.${agentId !== agent.id ? `\n\nLo va a ejecutar el **${byId[agentId].name}**.` : ""}`;
+    reply.content = `Programado para **${schedule.label}**: ${s.name} (${brain.TYPES[type]}, cron \`${s.cron}\`).\n\nPróxima ejecución: ${when}${agentId !== agent.id ? `\n\nLo va a ejecutar el **${byId[agentId].name}**.` : ""}`;
     reply.scheduleId = s.id;
   } else {
     reply.content = result.text;
@@ -149,8 +143,10 @@ app.use("/api", (req, res) => res.status(404).json({ error: "Ruta inexistente" }
 /* ---------- Frontend ---------- */
 
 if (fs.existsSync(PUBLIC_DIR)) {
-  app.use(express.static(PUBLIC_DIR, { index: false, maxAge: "1h" }));
-  app.get("*", (req, res) => res.sendFile(path.join(PUBLIC_DIR, "index.html")));
+  // Los assets llevan hash en el nombre: se cachean. index.html nunca, así cada deploy se ve al instante.
+  app.use("/assets", express.static(path.join(PUBLIC_DIR, "assets"), { maxAge: "30d", immutable: true }));
+  app.use(express.static(PUBLIC_DIR, { index: false, maxAge: 0 }));
+  app.get("*", (req, res) => res.set("Cache-Control", "no-cache").sendFile(path.join(PUBLIC_DIR, "index.html")));
 }
 
 app.use((err, req, res, next) => {
@@ -163,4 +159,5 @@ const fresh = load();
 scheduler.init();
 if (fresh) seed();
 resume();
-app.listen(PORT, () => console.log(`Sala 24/7 Copahue escuchando en http://localhost:${PORT}`));
+const HOST = process.env.HOST || "0.0.0.0";
+app.listen(PORT, HOST, () => console.log(`Sala 24/7 Copahue escuchando en http://${HOST}:${PORT}`));
