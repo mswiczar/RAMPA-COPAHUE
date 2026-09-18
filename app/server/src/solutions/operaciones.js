@@ -126,6 +126,43 @@ export function integracion() {
   };
 }
 
+/**
+ * Cobertura proyectada semana a semana: stock real + lo que está en tránsito + las órdenes
+ * de producción ya emitidas, menos la demanda. Sin órdenes nuevas: muestra cuándo quiebra
+ * cada producto si no se decide nada. Las órdenes llegan como parámetro para no acoplar
+ * esta solución con Producción.
+ */
+export function proyeccion(ordenes = [], semanas = 8) {
+  const inicio = Date.parse(HOY);
+  const fin = (k) => inicio + (k + 1) * 7 * 864e5;
+  const cols = Array.from({ length: semanas }, (_, k) => {
+    const d = new Date(fin(k) - 6 * 864e5).toISOString().slice(0, 10);
+    return { id: `s${k + 1}`, label: `${d.slice(8)}/${d.slice(5, 7)}` };
+  });
+  const filas = stock().map((p) => {
+    const diaria = p.demandaMes / 30;
+    const llegadas = [
+      ...ENTREGAS.enTransito.filter((t) => t.producto === p.label).map((t) => ({ fecha: t.eta, unidades: t.unidades, origen: `Tránsito ${t.orden}` })),
+      ...ordenes.filter((o) => o.producto === p.label && o.estado === "En producción").map((o) => ({ fecha: o.entrega, unidades: o.unidades, origen: `Orden ${o.id}` }))
+    ];
+    let saldo = p.real;
+    let quiebre = null;
+    const valores = cols.map((c, k) => {
+      const desde = k === 0 ? inicio : fin(k - 1);
+      const entra = llegadas.filter((l) => Date.parse(l.fecha) > desde && Date.parse(l.fecha) <= fin(k));
+      saldo += entra.reduce((a, l) => a + l.unidades, 0) - diaria * 7;
+      const dias = Math.max(0, r1(saldo / diaria));
+      if (saldo <= 0 && !quiebre) quiebre = c.label;
+      return { dias, unidades: Math.max(0, Math.round(saldo)), entradas: entra.map((l) => `${l.origen}: +${n(l.unidades)} u`) };
+    });
+    return { id: p.id, label: p.label, valores, quiebre };
+  });
+  return {
+    columnas: cols, filas, objetivo: COBERTURA_OBJETIVO,
+    nota: "Stock real + tránsito + órdenes de producción emitidas, sin órdenes nuevas"
+  };
+}
+
 export const META = {
   id: "operaciones", agentId: "operaciones", titulo: "Solución Operaciones",
   bajada: "Stock real unificado, vencimientos, quiebres en el canal y desempeño logístico.",

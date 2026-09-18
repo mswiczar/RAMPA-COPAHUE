@@ -134,6 +134,109 @@ export function RankBars({ data, unidad = "ARS M", ordinal = false, dec = 0 }) {
   );
 }
 
+// Escala divergente: naranja (debajo), gris neutro en el centro, celeste de marca (arriba).
+export const DIVERGENTE = ["#9c4418", "#d9804f", "#f3c6ac", "#e8edf0", "#b9e4f3", "#3fb4dc", "#0077a0"];
+// Escala secuencial de un solo tono, de claro a oscuro.
+export const SECUENCIAL = ["#e3f4fc", "#b9e4f3", "#7fcde8", "#3fb4dc", "#0090c2", "#0077a0"];
+
+/** Devuelve el paso de la escala según los cortes (cortes.length = colores.length - 1). */
+export const escala = (colores, cortes) => (v) => {
+  let i = 0;
+  while (i < cortes.length && v >= cortes[i]) i++;
+  return colores[i];
+};
+const OSCUROS = new Set(["#9c4418", "#0077a0", "#0090c2", "#3fb4dc", "#d9804f"]);
+
+/**
+ * Tabla de calor: filas × columnas, cada celda coloreada por su valor.
+ * Es una tabla de verdad (se lee sin color) y al pasar o enfocar una celda
+ * muestra el detalle en la barra de abajo.
+ */
+export function Heatmap({ filas, columnas, celda, color, leyenda, formato = (v) => fmtM(v), vacio = "No listado", resaltarColumna, caption }) {
+  const [foco, setFoco] = useState(null);
+  const vigente = foco && filas[foco.i] && columnas[foco.j] ? foco : null;
+  const detalle = vigente ? celda(filas[vigente.i], columnas[vigente.j], vigente.i, vigente.j) : null;
+  return (
+    <figure className="heat">
+      {leyenda && (
+        <div className="chart-legend heat-legend">
+          {leyenda.map(([c, label]) => <span key={label}><i className="sw" style={{ background: c, border: c === "vacio" ? "1px dashed var(--faint)" : undefined, ...(c === "vacio" ? { background: "repeating-linear-gradient(45deg, #fff 0 3px, #e8edf0 3px 5px)" } : {}) }} />{label}</span>)}
+        </div>
+      )}
+      <div className="table-wrap heat-wrap" onMouseLeave={() => setFoco(null)}>
+        <table className="heat-table">
+          {caption && <caption className="sr-only">{caption}</caption>}
+          <thead>
+            <tr>
+              <th scope="col" />
+              {columnas.map((c, j) => <th key={c.id} scope="col" className={resaltarColumna === j ? "en-curso" : ""}>{c.label}{c.sub && <span className="cell-sub">{c.sub}</span>}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((f, i) => (
+              <tr key={f.id}>
+                <th scope="row">{f.label}{f.sub && <span className="cell-sub">{f.sub}</span>}</th>
+                {columnas.map((c, j) => {
+                  const d = celda(f, c, i, j);
+                  const bg = d.valor === null || d.valor === undefined ? null : color(d.valor, d);
+                  const activo = vigente && vigente.i === i && vigente.j === j;
+                  return (
+                    <td key={c.id} tabIndex={0}
+                      className={`${bg ? "" : "vacio"} ${activo ? "activo" : ""} ${resaltarColumna === j ? "en-curso" : ""}`}
+                      style={bg ? { background: bg, color: OSCUROS.has(bg) ? "#fff" : "#0f2e3c" } : undefined}
+                      onMouseEnter={() => setFoco({ i, j })} onFocus={() => setFoco({ i, j })}>
+                      {bg ? (d.texto ?? formato(d.valor)) : <span aria-label={vacio}>—</span>}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <figcaption className="heat-detail" aria-live="polite">
+        {detalle
+          ? <><strong>{filas[vigente.i].label} · {columnas[vigente.j].label}</strong>{(detalle.tip || [["Valor", detalle.valor === null ? vacio : detalle.texto ?? formato(detalle.valor)]]).map(([k, v]) => <span key={k}><i>{k}</i>{v}</span>)}</>
+          : <span className="muted">Pasá el mouse o tocá una celda para ver el detalle.</span>}
+      </figcaption>
+    </figure>
+  );
+}
+
+/** Líneas para pocas series (hasta 4) en un eje común, con etiqueta directa al final. */
+export function Lineas({ etiquetas, series, unidad = "%", alto = 220 }) {
+  const [tip, setTip] = useTooltip();
+  const todos = series.flatMap((s) => s.valores);
+  const max = Math.max(...todos) * 1.1;
+  const min = Math.min(0, Math.min(...todos));
+  const px = (i) => (i / (etiquetas.length - 1)) * 84 + 3;
+  const py = (v) => alto - ((v - min) / (max - min)) * (alto - 16) - 8;
+  return (
+    <figure className="chart">
+      <div className="chart-legend">
+        {series.map((s, k) => <span key={s.label}><i className="sw" style={{ background: SERIES[k] }} />{s.label}</span>)}
+      </div>
+      <div className="chart-plot" style={{ height: alto }} onMouseLeave={() => setTip(null)}>
+        <svg viewBox={`0 0 100 ${alto}`} preserveAspectRatio="none" aria-hidden="true">
+          {[0.25, 0.5, 0.75, 1].map((g) => <line key={g} x1="0" x2="100" y1={py(max * g / 1.1)} y2={py(max * g / 1.1)} stroke={GRID} strokeWidth="1" vectorEffect="non-scaling-stroke" />)}
+          {series.map((s, k) => (
+            <path key={s.label} d={s.valores.map((v, i) => `${i ? "L" : "M"}${px(i)},${py(v)}`).join(" ")} fill="none" stroke={SERIES[k]} strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+          ))}
+          {etiquetas.map((e, i) => (
+            <rect key={e} x={px(i) - 4} y="0" width="8" height={alto} fill="transparent"
+              onMouseEnter={() => setTip({ x: Math.min(80, px(i)), y: 2, title: e, rows: series.map((s) => [s.label, `${fmtM(s.valores[i], 1)}${unidad}`]) })} />
+          ))}
+        </svg>
+        <div className="line-labels">
+          {series.map((s, k) => <span key={s.label} style={{ top: `${(py(s.valores.at(-1)) / alto) * 100}%` }}><i style={{ background: SERIES[k] }} />{fmtM(s.valores.at(-1), 1)}{unidad}</span>)}
+        </div>
+        {tip}
+      </div>
+      <div className="chart-x" style={{ paddingRight: "13%" }}>{etiquetas.map((e) => <span key={e}>{e}</span>)}</div>
+    </figure>
+  );
+}
+
 /** Puente: qué explica la diferencia entre dos totales. */
 export function Waterfall({ desde, pasos, hasta, unidad = "ARS M", alto = 190 }) {
   const [tip, setTip] = useTooltip();

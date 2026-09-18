@@ -16,6 +16,7 @@ import * as rd from "./solutions/rd.js";
 import * as operaciones from "./solutions/operaciones.js";
 import * as produccion from "./solutions/produccion.js";
 import * as consultas from "./solutions/consultas.js";
+import * as pdv from "./solutions/pdv.js";
 import { seed } from "./seed.js";
 
 const PORT = Number(process.env.PORT || 8080);
@@ -281,7 +282,57 @@ app.get("/api/solutions/comercial/integracion", wrap((req) => {
   return integ;
 }));
 
-app.get("/api/solutions/operaciones", wrap(() => operaciones.resumen()));
+/* Auditoría de punto de venta (dentro de Comercial): misiones, góndola y calidad del relevamiento. */
+app.get("/api/solutions/comercial/pdv", wrap(() => pdv.resumen(db.misiones, db.tasks)));
+app.get("/api/solutions/comercial/pdv/gondola/:id", wrap((req) => {
+  const g = pdv.gondola(req.params.id);
+  if (!g) throw new HttpError(404, "No existe ese relevamiento");
+  return g;
+}));
+app.post("/api/solutions/comercial/pdv/misiones", wrap((req) => {
+  // Crear una misión compromete saldo: la arma Comercial o Dirección, y siempre la aprueba Dirección.
+  if (!["direccion", "comercial"].includes(req.user?.rol)) throw new HttpError(403, "Solo Comercial o Dirección pueden crear misiones");
+  const b = req.body || {};
+  const modalidad = pdv.MODALIDADES.find((m) => m.id === b.modalidad);
+  if (!modalidad) throw new HttpError(400, "Elegí una modalidad");
+  const nombre = String(b.nombre || "").trim().slice(0, 120);
+  if (!nombre) throw new HttpError(400, "Poné un nombre a la misión");
+  const puntos = Math.round(Number(b.puntos));
+  if (!Number.isFinite(puntos) || puntos < 1 || puntos > 500) throw new HttpError(400, "La cantidad de puntos tiene que estar entre 1 y 500");
+  const recompensa = Math.round(Number(b.recompensa));
+  if (!Number.isFinite(recompensa) || recompensa < 1000 || recompensa > 20000) throw new HttpError(400, "La recompensa tiene que estar entre ARS 1.000 y 20.000");
+  const lista = (v, validos) => (Array.isArray(v) ? v : []).map(String).filter((x) => validos.includes(x));
+  const skus = lista(b.skus, pdv.resumen().skus.map((s) => s.id));
+  const cadenas = lista(b.cadenas, pdv.CADENAS.map((c) => c.label));
+  if (modalidad.id === "control" && !skus.length) throw new HttpError(400, "Elegí al menos un producto para controlar");
+  if (!cadenas.length) throw new HttpError(400, "Elegí al menos una cadena");
+  const mision = {
+    id: `M-${String(33 + db.misiones.length).padStart(3, "0")}`, nombre, modalidad: modalidad.id, puntos, recompensa,
+    pro: Boolean(b.pro) && modalidad.id === "control", fee: modalidad.fee,
+    skus, cadenas, zonas: [...new Set(pdv.CADENAS.filter((c) => cadenas.includes(c.label)).map((c) => c.zona))],
+    objetivo: String(b.objetivo || "").trim().slice(0, 400),
+    creada: new Date().toISOString().slice(0, 10), creadaPor: req.user.nombre, taskId: null,
+    // Si viene de una sugerencia del agente, queda registrado: la sugerencia deja de ofrecerse.
+    sugerencia: pdv.sugerencias().some((s) => s.id === b.sugerencia) ? b.sugerencia : null
+  };
+  const unitario = pdv.costoUnitario(mision);
+  const costo = unitario === null ? null : unitario * puntos;
+  const actual = pdv.saldo(pdv.misiones(db.misiones, db.tasks));
+  if (costo !== null && costo > actual.disponible) throw new HttpError(400, `Saldo insuficiente: la misión compromete ARS ${costo.toLocaleString("es-AR")} y hay ${actual.disponible.toLocaleString("es-AR")} disponibles`);
+  const task = createTask({
+    agentId: "comercial", type: "accion",
+    title: `Publicar misión de relevamiento ${mision.id}: ${nombre}`,
+    instruction: `Publicar la misión «${nombre}» (${modalidad.label}): ${puntos} puntos en ${cadenas.join(", ")}${skus.length ? `, SKU ${skus.join(", ")}` : ""}. ${costo === null ? "Costo a cotizar por el proveedor." : `Compromete hasta ARS ${costo.toLocaleString("es-AR")} (ARS ${unitario.toLocaleString("es-AR")} por relevamiento); solo se descuenta lo validado.`}`,
+    pedidoPor: req.user.nombre
+  });
+  mision.taskId = task.id;
+  db.misiones.unshift(mision);
+  audit.registrar(req, "creó misión de relevamiento", `${mision.id} · ${nombre}`, `${costo === null ? "A cotizar" : `ARS ${costo.toLocaleString("es-AR")}`}${mision.sugerencia ? " · sugerida por el agente" : ""}`);
+  changed("misiones");
+  return { ...mision, costo };
+}));
+
+app.get("/api/solutions/operaciones", wrap(() => ({ ...operaciones.resumen(), proyeccion: operaciones.proyeccion(produccion.ORDENES) })));
 app.get("/api/solutions/produccion", wrap(() => produccion.resumen()));
 app.get("/api/solutions/produccion/simular", wrap((req) => produccion.simular({
   aprobarSugeridas: req.query.aprobar !== "0",

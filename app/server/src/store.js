@@ -10,7 +10,7 @@ const FILE = path.join(DATA_DIR, "db.json");
 export const bus = new EventEmitter();
 bus.setMaxListeners(200);
 
-const empty = () => ({ messages: {}, tasks: [], schedules: [], deliverables: [], emails: [], activity: [] });
+const empty = () => ({ messages: {}, tasks: [], schedules: [], deliverables: [], emails: [], activity: [], misiones: [] });
 
 export let db = empty();
 let saveTimer = null;

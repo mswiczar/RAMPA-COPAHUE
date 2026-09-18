@@ -5,6 +5,8 @@ import * as comercial from "./comercial.js";
 import * as rd from "./rd.js";
 import * as operaciones from "./operaciones.js";
 import * as produccion from "./produccion.js";
+import * as pdv from "./pdv.js";
+import { db } from "../store.js";
 
 const n = (v, dec = 0) => new Intl.NumberFormat("es-AR", { minimumFractionDigits: dec, maximumFractionDigits: dec }).format(v);
 const r0 = (v) => Math.round(v);
@@ -111,6 +113,26 @@ const COMERCIAL = [
       const c = comercial.clientes();
       const bajos = c.territorios.filter((t) => t.penetracion < 70).sort((a, b) => b.potencial - a.potencial);
       return `Cobertura por territorio [Elvis]:\n\n${bajos.map((t) => `- **${t.territorio}** (${t.vendedor}): ${n(t.penetracion, 1)}% de penetración, ${t.potencial} farmacias sin cubrir`).join("\n")}\n\nEl resto está por encima del 80%.\n\nRecomendación: NOA es el mayor potencial sin cubrir y no tiene vendedor asignado. Conviene decidir si se asigna o se atiende por droguería.`;
+    }
+  },
+  {
+    id: "gondola",
+    ejemplo: "¿Qué está pasando en la góndola?",
+    keys: ["gondola", "gondolas", "punto", "venta", "presencia", "exhibicion", "exhibido", "facings", "frentes", "share", "shelf", "espacio", "pop", "exhibidor"],
+    responder() {
+      const r = pdv.resumen(db.misiones, db.tasks);
+      const k = (id) => r.kpis.find((x) => x.id === id);
+      return `Auditoría de punto de venta, relevamientos validados del mes [Relevamiento en góndola] (datos sintéticos):\n\n- Presencia promedio: **${n(k("presencia").valor, 1)}%** de las sucursales\n- Share of shelf: ${n(k("share").valor, 1)}%, contra ${n(k("share").contra, 1)}% de share de ventas\n- Frentes de FPS50: ${n(k("facings").valor, 1)} contra 4 acordados\n- Exhibidor de verano: ${r.pop.instaladas} de ${r.pop.acordadas} farmacias\n\nAlertas de la IA:\n${r.alertas.slice(0, 5).map((a) => `- ${a.t}`).join("\n")}\n\nRecomendación: la falta de FPS50 en AMBA no es de la cadena, es el quiebre del depósito; hay que verificar la reposición cuando entre la orden del 01/10. [Ver el punto de venta](#/comercial/pdv)`;
+    }
+  },
+  {
+    id: "misiones",
+    ejemplo: "¿Qué misiones de relevamiento conviene lanzar?",
+    keys: ["mision", "misiones", "relevar", "relevamiento", "relevamientos", "relevador", "relevadores", "auditar", "saldo", "lanzar"],
+    responder() {
+      const r = pdv.resumen(db.misiones, db.tasks);
+      const abiertas = r.misiones.filter((m) => ["por_aprobar", "publicada", "en_curso"].includes(m.estado));
+      return `Saldo para relevamientos: **ARS ${n(r.saldo.disponible)}** disponibles de ${n(r.saldo.cargado)} (${n(r.saldo.consumido)} consumidos, ${n(r.saldo.reservado)} reservados) [Plataforma de relevamiento].\n\nMisiones abiertas: ${abiertas.length ? abiertas.map((m) => `${m.id} ${m.nombre} (${m.relevados}/${m.puntos})`).join("; ") : "ninguna"}.\n\n${r.sugerencias.length ? `Misiones que sugiero:\n${r.sugerencias.map((s) => `- **${s.nombre}**: ${s.puntos} puntos, ${s.costo === null ? "a cotizar" : `ARS ${n(s.costo)}`}. ${s.motivo}`).join("\n")}` : "No tengo misiones nuevas para sugerir."}\n\nRecomendación: empezar por la de reposición de FPS50, que es la que cuesta ventas. Cada misión la revisa una persona y la aprueba Dirección. [Revisar y enviar](#/comercial/pdv)`;
     }
   }
 ];
@@ -315,6 +337,17 @@ const OPERACIONES = [
     }
   }
 ];
+
+OPERACIONES.push({
+  id: "proyeccion",
+  ejemplo: "¿Cuándo quiebra cada producto si no hacemos nada?",
+  keys: ["cuando", "quiebra", "quiebran", "proyeccion", "proyectada", "semana", "semanas", "proximas", "alcanza", "llega", "hacemos"],
+  responder() {
+    const p = operaciones.proyeccion(produccion.ORDENES);
+    const riesgo = p.filas.filter((f) => f.quiebre);
+    return `Cobertura proyectada a ${p.columnas.length} semanas: ${p.nota.toLowerCase()} [Disprofarma] [Ship Now] [Capataz]:\n\n${p.filas.map((f) => `- **${f.label}**: ${f.quiebre ? `quiebra la semana del ${f.quiebre}` : `cubierto; termina con ${n(f.valores.at(-1).dias)} días`}`).join("\n")}\n\n${riesgo.length ? `Recomendación: ${riesgo.map((f) => f.label.split(" ").slice(0, 2).join(" ")).join(" y ")} quiebran aun con las órdenes en curso. Hay que emitir la orden adicional antes del 25/09. [Ver la proyección](#/operaciones/stock)` : "Recomendación: no hace falta emitir nada nuevo por ahora."}`;
+  }
+});
 
 const PRODUCCION = [
   {

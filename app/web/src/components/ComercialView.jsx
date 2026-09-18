@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useFetch } from "../live.jsx";
-import { RankBars, fmtM, fmtPct } from "./charts.jsx";
+import { RankBars, Heatmap, DIVERGENTE, escala, fmtM, fmtPct } from "./charts.jsx";
 import MapaArgentina from "./MapaArgentina.jsx";
+import PuntoDeVenta from "./PuntoDeVenta.jsx";
 
-const TABS = [["tablero", "Tablero"], ["pipeline", "Pipeline"], ["funnel", "Funnel"], ["forecast", "Forecast"], ["clientes", "Clientes y territorios"], ["ia", "Inteligencia"]];
+const TABS = [["tablero", "Tablero"], ["pipeline", "Pipeline"], ["funnel", "Funnel"], ["forecast", "Forecast"], ["clientes", "Clientes y territorios"], ["pdv", "Punto de venta"], ["ia", "Inteligencia"]];
 const ESTADO_LABEL = { conciliado: "Conciliado", operativo: "Operativo", proyectado: "Proyectado", estimado: "Estimado" };
 const Tipo = ({ tipo }) => <span className={`tipo tipo-${tipo}`}>{ESTADO_LABEL[tipo] || tipo}</span>;
 
-export default function ComercialView({ sub }) {
+export default function ComercialView({ sub, detalle }) {
   const { data, error } = useFetch("/api/solutions/comercial");
   const [tab, setTab] = useState(sub || "tablero");
   if (error) return <p className="form-error">{error}</p>;
@@ -36,6 +37,7 @@ export default function ComercialView({ sub }) {
       {tab === "funnel" && <Funnel f={data.funnel} />}
       {tab === "forecast" && <Forecast f={data.forecast} desempeno={data.desempeno} />}
       {tab === "clientes" && <Clientes />}
+      {tab === "pdv" && <PuntoDeVenta key={detalle} inicial={detalle} />}
       {tab === "ia" && <Inteligencia ia={data.inteligencia} />}
     </div>
   );
@@ -139,7 +141,39 @@ function Tablero({ data }) {
           <p className="muted small">El puesto combina facturación, margen, cobranza y retención, y descuenta por descuentos otorgados. No es solo facturación.</p>
         </section>
       </div>
+
+      <CumplimientoMensual m={data.mensual} />
     </div>
+  );
+}
+
+const colorCumplimiento = escala(DIVERGENTE, [75, 85, 95, 105, 115, 125]);
+
+function CumplimientoMensual({ m }) {
+  const filas = m.filas.map((f) => ({ ...f, sub: f.territorio }));
+  const columnas = m.meses.map((mes, j) => ({ id: mes, label: j === m.enCurso ? `${mes}*` : mes }));
+  const caen = m.filas.filter((f) => f.bajoSostenido);
+  return (
+    <section className="card wide">
+      <div className="card-head">
+        <h2>Cumplimiento mensual por vendedor</h2>
+        <span className="muted">% de la cuota de cada mes · {m.nota}</span>
+      </div>
+      <Heatmap
+        caption="Cumplimiento de cuota por vendedor y mes"
+        filas={filas} columnas={columnas} resaltarColumna={m.enCurso}
+        celda={(f, c, i, j) => {
+          const v = f.valores[j];
+          return { valor: v, texto: `${v}%`, tip: [["Cumplimiento", `${v}% de la cuota${j === m.enCurso ? " prorrateada al día 17" : ""}`], ["Contra el mes anterior", j ? fmtPct(v - f.valores[j - 1], 0) + " pts" : "—"], ["Dato", j === m.enCurso ? "Operativo, mes en curso" : "Conciliado"]] };
+        }}
+        color={colorCumplimiento}
+        leyenda={[[DIVERGENTE[0], "< 75%"], [DIVERGENTE[1], "75–85%"], [DIVERGENTE[2], "85–95%"], [DIVERGENTE[3], "95–105%"], [DIVERGENTE[4], "105–115%"], [DIVERGENTE[5], "115–125%"], [DIVERGENTE[6], "≥ 125%"]]}
+      />
+      <p className="muted small">
+        Gris es cumplir; naranja, quedar abajo; celeste, pasarse.
+        {caen.length ? ` Tres meses seguidos debajo del 85%: ${caen.map((f) => f.label).join(" y ")}. No es un mes malo, es una caída sostenida; coincide con los vendedores que el agente marca para coaching.` : ""}
+      </p>
+    </section>
   );
 }
 

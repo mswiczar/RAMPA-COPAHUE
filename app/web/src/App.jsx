@@ -25,7 +25,7 @@ function useRoute() {
 }
 
 export default function App({ user, permisos, onLogout }) {
-  const [view, param] = useRoute();
+  const [view, param, detalle] = useRoute();
   const { data: agents } = useFetch("/api/agents");
   const { data: summary } = useFetch("/api/summary");
   // Sin acceso al CEO, la sala abre en el primer agente que el rol puede ver.
@@ -96,7 +96,7 @@ export default function App({ user, permisos, onLogout }) {
           </div>
         )}
         {view === "auditoria" && puedeVer("auditoria") && <AuditView />}
-        {view === "comercial" && puedeVer("comercial") && <ComercialView key={param} sub={param} />}
+        {view === "comercial" && puedeVer("comercial") && <ComercialView key={param} sub={param} detalle={detalle} />}
         {view === "rd" && puedeVer("rd") && <RDView key={param} sub={param} />}
         {view === "operaciones" && puedeVer("operaciones") && <OperacionesView key={param} sub={param} />}
         {view === "produccion" && puedeVer("produccion") && <ProduccionView key={param} sub={param} />}

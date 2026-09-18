@@ -145,6 +145,40 @@ export function desempeno() {
   return { vendedores, equipo };
 }
 
+// Cumplimiento mensual contra la cuota del mes, de enero a agosto (meses cerrados).
+const MENSUAL = {
+  kam01: [91, 94, 88, 97, 93, 90, 88, 84],
+  kam02: [96, 99, 102, 98, 101, 97, 102, 99],
+  apm01: [104, 101, 99, 106, 103, 108, 108, 102],
+  apm02: [97, 95, 92, 94, 90, 87, 84, 74],
+  apm03: [98, 103, 107, 104, 110, 112, 118, 120],
+  apm05: [88, 84, 90, 86, 82, 79, 80, 72],
+  apm06: [109, 106, 112, 115, 111, 118, 130, 128]
+};
+
+/**
+ * Vendedor × mes. Septiembre está en curso: se mide contra la cuota prorrateada al día de hoy
+ * y se despeja para que el trimestre coincida con el cumplimiento de la cuota.
+ */
+export function cumplimientoMensual() {
+  const diaDelMes = Number(HOY.slice(8)) / 30;
+  const meses = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep"];
+  const filas = VENDEDORES.map((v) => {
+    const serie = MENSUAL[v.id];
+    const trimestre = v.ventas / v.cuota;
+    const sep = Math.round(((3 * trimestre - serie[6] / 100 - serie[7] / 100) / diaDelMes) * 100);
+    const valores = [...serie, sep];
+    const ultimos3 = valores.slice(-3);
+    return {
+      id: v.id, label: v.label, territorio: v.territorio, valores,
+      tendencia: ultimos3[2] - ultimos3[0],
+      // Tres meses seguidos debajo del 85%: es una caída sostenida, no un mes malo.
+      bajoSostenido: ultimos3.every((x) => x < 85)
+    };
+  });
+  return { meses, enCurso: 8, filas, nota: "Septiembre, al día 17 contra la cuota prorrateada" };
+}
+
 export function funnel() {
   const etapas = [
     { etapa: "Leads trabajados", cantidad: 412, dias: 2 },
@@ -343,6 +377,7 @@ export function resumen() {
       { id: "ticket", label: "Ticket promedio", valor: fu.ticket, unidad: "ARS M", contra: 31, tipo: "conciliado", detalle: "Últimos 12 meses" },
       { id: "nuevos", label: "Clientes nuevos", valor: d.equipo.nuevosClientes, unidad: "cuentas", tipo: "conciliado", detalle: "En el trimestre" }
     ],
-    pipeline: p, desempeno: d, funnel: fu, forecast: f, inteligencia: inteligencia()
+    pipeline: p, desempeno: d, funnel: fu, forecast: f, inteligencia: inteligencia(),
+    mensual: cumplimientoMensual()
   };
 }

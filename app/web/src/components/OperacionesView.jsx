@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useFetch } from "../live.jsx";
-import { RankBars, fmtM, fmtPct } from "./charts.jsx";
+import { RankBars, Heatmap, DIVERGENTE, SECUENCIAL, escala, fmtM } from "./charts.jsx";
 
 const TABS = [["tablero", "Tablero"], ["stock", "Stock"], ["canal", "Canal online"], ["logistica", "Logística"]];
 const ESTADO_LABEL = { conciliado: "Conciliado", operativo: "Operativo", proyectado: "Proyectado", estimado: "Estimado" };
@@ -105,10 +105,47 @@ function Tablero({ data }) {
   );
 }
 
+// Cobertura: naranja cuando se acerca al quiebre, gris en torno al objetivo, celeste cuando sobra stock.
+const colorCobertura = escala(DIVERGENTE, [0.1, 15, 30, 60, 90, 120]);
+
+function Proyeccion({ p }) {
+  const filas = p.filas.map((f) => ({ ...f, label: f.label.split(" ").slice(0, 3).join(" "), largo: f.label, sub: f.quiebre ? `Quiebra la semana del ${f.quiebre}` : "Cubierto en el horizonte" }));
+  const enRiesgo = p.filas.filter((f) => f.quiebre);
+  return (
+    <section className="card wide">
+      <div className="card-head">
+        <h2>Cobertura proyectada semana a semana</h2>
+        <span className="muted">Días de stock al cierre de cada semana · {p.nota}</span>
+      </div>
+      <Heatmap
+        caption="Días de cobertura proyectados por producto y semana"
+        filas={filas} columnas={p.columnas.map((c) => ({ ...c, label: `Sem ${c.label}` }))}
+        celda={(f, c, i, j) => {
+          const v = f.valores[j];
+          return {
+            valor: v.dias, texto: v.dias === 0 ? "Quiebre" : `${fmtM(v.dias, 0)} d`,
+            tip: [["Producto", f.largo], ["Stock al cierre", `${fmtM(v.unidades)} u`], ["Cobertura", v.dias === 0 ? "Sin stock" : `${fmtM(v.dias, 0)} días`], ...(v.entradas.length ? [["Entra esa semana", v.entradas.join(" · ")]] : [])]
+          };
+        }}
+        color={colorCobertura}
+        leyenda={[[DIVERGENTE[0], "Quiebre"], [DIVERGENTE[1], "< 15 días"], [DIVERGENTE[2], "15–30"], [DIVERGENTE[3], `30–60 (objetivo ${p.objetivo})`], [DIVERGENTE[4], "60–90"], [DIVERGENTE[5], "90–120"], [DIVERGENTE[6], "> 120: capital inmovilizado"]]}
+      />
+      <p className="muted small">
+        {enRiesgo.length
+          ? `${enRiesgo.map((f) => `${f.label.split(" ").slice(0, 2).join(" ")} quiebra la semana del ${f.quiebre}`).join("; ")}, aun con las órdenes que ya están en producción. Para evitarlo, la orden nueva tiene que salir antes del 25/09.`
+          : "Todo el portfolio queda cubierto en el horizonte."}{" "}
+        <a href="#/produccion">Ver el plan de producción</a>
+      </p>
+    </section>
+  );
+}
+
 function Stock({ data }) {
   const { stock, lotes } = data;
   return (
     <div className="solution">
+      {data.proyeccion && <Proyeccion p={data.proyeccion} />}
+
       <section className="card wide">
         <div className="card-head"><h2>Stock real contra el ERP</h2><Tipo tipo="operativo" /></div>
         <div className="table-wrap">
@@ -169,21 +206,18 @@ function Canal({ data }) {
       <section className="card wide">
         <div className="card-head"><h2>Quiebres en farmacias online</h2><span className="muted">{tiendasRelevadas} tiendas relevadas todos los días a las 7:00</span></div>
         <RankBars data={quiebres.map((q) => ({ label: q.producto, valor: q.sinStock, color: q.sinStock > 15 ? "#d1453b" : q.sinStock > 8 ? "#dd8408" : "#0090c2", nota: `${q.pct}% de las tiendas · ${q.tendencia > 0 ? `empeoró ${q.tendencia} en la semana` : q.tendencia < 0 ? `mejoró ${Math.abs(q.tendencia)}` : "estable"} · ${q.cadenas.join(", ")}` }))} unidad="tiendas" />
-        <h3 className="sub">Últimos 7 días</h3>
-        <div className="table-wrap">
-          <table className="table">
-            <thead><tr><th scope="col">Producto</th>{["L", "M", "M", "J", "V", "S", "D"].map((d, i) => <th key={i} scope="col" className="num">{d}</th>)}<th scope="col" className="num">Tendencia</th></tr></thead>
-            <tbody>
-              {quiebres.map((q) => (
-                <tr key={q.producto}>
-                  <td>{q.producto}</td>
-                  {q.serie.map((v, i) => <td key={i} className="num">{v}</td>)}
-                  <td className={`num ${q.tendencia > 0 ? "down" : q.tendencia < 0 ? "up" : ""}`}>{q.tendencia > 0 ? `+${q.tendencia}` : q.tendencia}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <h3 className="sub">Últimos 7 días · tiendas sin stock</h3>
+        <Heatmap
+          caption="Tiendas online sin stock por producto y día"
+          filas={quiebres.map((q) => ({ id: q.producto, label: q.producto.split(" ").slice(0, 3).join(" "), largo: q.producto, q, sub: q.tendencia > 0 ? `Empeoró ${q.tendencia} en la semana` : q.tendencia < 0 ? `Mejoró ${Math.abs(q.tendencia)}` : "Estable" }))}
+          columnas={["Vie", "Sáb", "Dom", "Lun", "Mar", "Mié", "Hoy"].map((d, i) => ({ id: `d${i}`, label: d }))}
+          celda={(f, c, i, j) => {
+            const v = f.q.serie[j];
+            return { valor: v, texto: String(v), tip: [["Producto", f.largo], ["Tiendas sin stock", `${v} de ${tiendasRelevadas} (${fmtM((v / tiendasRelevadas) * 100, 1)}%)`], ["Cadenas", f.q.cadenas.join(", ")]] };
+          }}
+          color={escala(SECUENCIAL, [3, 6, 10, 15, 20])}
+          leyenda={[[SECUENCIAL[0], "Menos de 3"], [SECUENCIAL[2], "6–10"], [SECUENCIAL[3], "10–15"], [SECUENCIAL[4], "15–20"], [SECUENCIAL[5], "20 o más tiendas"]]}
+        />
         <p className="muted small">El relevamiento lo hace un robot sobre las tiendas online y llega por mail. En el sistema, el agente lo procesa solo y lo convierte en alertas.</p>
       </section>
     </div>
