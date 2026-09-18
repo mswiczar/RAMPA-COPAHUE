@@ -10,6 +10,8 @@ import { createTask, decide, resume } from "./worker.js";
 import * as scheduler from "./scheduler.js";
 import * as finanzas from "./solutions/finanzas.js";
 import * as comercial from "./solutions/comercial.js";
+import * as rd from "./solutions/rd.js";
+import * as consultas from "./solutions/consultas.js";
 import { seed } from "./seed.js";
 
 const PORT = Number(process.env.PORT || 8080);
@@ -60,7 +62,8 @@ function agentSummary(a) {
   const tasks = db.tasks.filter((t) => t.agentId === a.id);
   return {
     id: a.id, name: a.name, short: a.short, tagline: a.tagline, mission: a.mission, systems: a.systems, alerts: a.alerts,
-    suggestions: a.qa.map((x) => x.q),
+    solucion: [finanzas.META.agentId, comercial.META.agentId, rd.META.agentId].includes(a.id) ? a.id : null,
+    suggestions: [...consultas.ejemplos(a.id).slice(0, 4), ...a.qa.map((x) => x.q)].slice(0, 6),
     activeTasks: tasks.filter((t) => ["pendiente", "en_curso"].includes(t.status)).length,
     pendingApprovals: tasks.filter((t) => t.status === "esperando_aprobacion").length,
     schedules: db.schedules.filter((s) => s.agentId === a.id && s.enabled).length
@@ -127,7 +130,7 @@ app.get("/api/cron/preview", wrap((req) => ({ next: scheduler.nextRun(String(req
 
 /* ---------- Soluciones (tableros por agente) ---------- */
 
-app.get("/api/solutions", wrap(() => [finanzas.META, comercial.META].map(({ id, agentId, titulo, bajada }) => ({ id, agentId, titulo, bajada }))));
+app.get("/api/solutions", wrap(() => [finanzas.META, comercial.META, rd.META].map(({ id, agentId, titulo, bajada }) => ({ id, agentId, titulo, bajada }))));
 
 app.get("/api/solutions/finanzas", wrap(() => ({
   meta: finanzas.META,
@@ -161,6 +164,13 @@ app.get("/api/solutions/comercial/oportunidades", wrap((req) => {
   return comercial.oportunidades().filter((o) => (!etapa || o.etapa === etapa) && (!vendedor || o.vendedor === vendedor));
 }));
 app.get("/api/solutions/comercial/clientes", wrap(() => comercial.clientes()));
+
+app.get("/api/solutions/rd", wrap(() => rd.resumen()));
+app.get("/api/solutions/rd/inversion", wrap((req) => {
+  const monto = Number(req.query.monto ?? 200);
+  if (!Number.isFinite(monto) || monto <= 0) throw new HttpError(400, "El monto tiene que ser un número mayor a cero");
+  return rd.inversionAdicional(Math.min(2000, monto));
+}));
 app.get("/api/solutions/comercial/integracion", wrap((req) => comercial.integracion(String(req.query.escenario || "probable"))));
 
 /* ---------- Entregables y bandeja de salida ---------- */

@@ -369,6 +369,31 @@ code.cell-sub { font-size: 11.5px; }
 .cross { background: var(--ground-2); border-radius: 12px; padding: 14px 16px; }
 .cross .sub { margin-top: 0; }
 
+/* R&D */
+.etapas { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.etapa h3 { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-family: var(--sans); font-weight: 600; margin-bottom: 8px; }
+.etapa .empty { font-size: 12px; }
+.proyecto { display: flex; flex-direction: column; gap: 3px; width: 100%; text-align: left; background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--brand); border-radius: 10px; padding: 9px 10px; margin-bottom: 8px; cursor: pointer; }
+.proyecto:hover { border-color: var(--brand); background: var(--brand-softer); }
+.proyecto.on { background: var(--brand-soft); box-shadow: inset 0 0 0 1px var(--brand); }
+.proyecto.demorado { border-left-color: var(--warn); }
+.proyecto strong { font-size: 12.5px; line-height: 1.25; }
+.proyecto-meta { font-size: 11px; color: var(--muted); }
+.proyecto-flag { font-size: 11px; color: var(--warn); font-weight: 600; }
+.radar { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.radar li { border: 1px solid var(--line); border-top: 3px solid var(--ok); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 5px; }
+.radar li.riesgo { border-top-color: var(--crit); }
+.radar li p { margin: 0; font-size: 13px; }
+.radar-head { display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.accion { font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 2px 8px; display: inline-block; }
+.accion-acelerar { background: #e6f6f1; color: #0b6b53; }
+.accion-mantener { background: var(--brand-soft); color: var(--brand-ink); }
+.accion-pausar { background: #fdf0e6; color: #8c3f12; }
+.accion-asociarse { background: #f0ecfb; color: #4e3a86; }
+.accion-cancelar { background: #fbe9e7; color: #9c2f26; }
+.table tr.propio td { background: var(--brand-softer); font-weight: 500; }
+.q-fill { position: absolute; top: 0; bottom: 0; }
+
 /* Escenarios */
 .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .sliders { display: flex; flex-direction: column; gap: 10px; }

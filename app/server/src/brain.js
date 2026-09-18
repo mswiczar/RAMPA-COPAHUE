@@ -1,6 +1,7 @@
 // "Cerebro" MOCK de los agentes: responde, detecta encargos y genera entregables
 // a partir de los datos simulados. Se reemplaza por Claude + sistemas reales.
 import { AGENTS, CEO, byId, PERIODO, MAIL_ALIASES } from "./agents.js";
+import * as consultas from "./solutions/consultas.js";
 
 export const TYPES = { reporte: "Reporte", investigacion: "Investigación", email: "Email", accion: "Acción" };
 
@@ -41,6 +42,9 @@ export function chat(agent, text) {
 }
 
 export function answer(agent, text) {
+  // Primero, la solución del agente: datos vivos del tablero.
+  const delTablero = consultas.responder(agent.id, text);
+  if (delTablero) return delTablero;
   const [best] = bestAnswers(agent, text);
   if (best && best.s >= 2) {
     if (agent.id === "ceo" && best.agent.id !== "ceo") return `Según el ${best.agent.name}:\n\n${best.a}`;
