@@ -9,6 +9,7 @@ import * as brain from "./brain.js";
 import { createTask, decide, resume } from "./worker.js";
 import * as scheduler from "./scheduler.js";
 import * as finanzas from "./solutions/finanzas.js";
+import * as comercial from "./solutions/comercial.js";
 import { seed } from "./seed.js";
 
 const PORT = Number(process.env.PORT || 8080);
@@ -126,7 +127,7 @@ app.get("/api/cron/preview", wrap((req) => ({ next: scheduler.nextRun(String(req
 
 /* ---------- Soluciones (tableros por agente) ---------- */
 
-app.get("/api/solutions", wrap(() => [{ id: finanzas.META.id, agentId: finanzas.META.agentId, titulo: finanzas.META.titulo, bajada: finanzas.META.bajada }]));
+app.get("/api/solutions", wrap(() => [finanzas.META, comercial.META].map(({ id, agentId, titulo, bajada }) => ({ id, agentId, titulo, bajada }))));
 
 app.get("/api/solutions/finanzas", wrap(() => ({
   meta: finanzas.META,
@@ -153,6 +154,14 @@ app.post("/api/solutions/finanzas/escenario", wrap((req) => {
   }
   return finanzas.escenario(deltas);
 }));
+
+app.get("/api/solutions/comercial", wrap(() => comercial.resumen()));
+app.get("/api/solutions/comercial/oportunidades", wrap((req) => {
+  const { etapa, vendedor } = req.query;
+  return comercial.oportunidades().filter((o) => (!etapa || o.etapa === etapa) && (!vendedor || o.vendedor === vendedor));
+}));
+app.get("/api/solutions/comercial/clientes", wrap(() => comercial.clientes()));
+app.get("/api/solutions/comercial/integracion", wrap((req) => comercial.integracion(String(req.query.escenario || "probable"))));
 
 /* ---------- Entregables y bandeja de salida ---------- */
 

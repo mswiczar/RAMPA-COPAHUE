@@ -7,6 +7,7 @@ import SchedulesView from "./components/SchedulesView.jsx";
 import OutboxView from "./components/OutboxView.jsx";
 import DeliverablesView from "./components/DeliverablesView.jsx";
 import FinanzasView from "./components/FinanzasView.jsx";
+import ComercialView from "./components/ComercialView.jsx";
 
 function useRoute() {
   const read = () => (window.location.hash.replace(/^#\/?/, "") || "sala").split("/");
@@ -37,6 +38,7 @@ export default function App({ user, onLogout }) {
 
   const nav = [
     ["sala", "Sala"],
+    ["comercial", "Comercial", null],
     ["finanzas", "Finanzas", null],
     ["tareas", "Tareas", summary?.pendingApprovals],
     ["programaciones", "Programaciones", null],
@@ -76,6 +78,7 @@ export default function App({ user, onLogout }) {
             {agents && <AgentPanel key={agentId} agentId={agentId} agents={agents} />}
           </div>
         )}
+        {view === "comercial" && <ComercialView />}
         {view === "finanzas" && <FinanzasView />}
         {view === "tareas" && <TasksView agents={agents || []} focus={param} />}
         {view === "programaciones" && <SchedulesView agents={agents || []} />}

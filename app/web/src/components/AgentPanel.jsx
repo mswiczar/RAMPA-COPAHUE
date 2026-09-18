@@ -28,7 +28,7 @@ export default function AgentPanel({ agentId, agents }) {
         </div>
         <div className="sys">
           {agent.systems.map((s) => <span key={s}>{s}</span>)}
-          {agent.id === "finanzas" && <a className="btn small" href="#/finanzas">Abrir tablero →</a>}
+          {["finanzas", "comercial"].includes(agent.id) && <a className="btn small" href={`#/${agent.id}`}>Abrir tablero →</a>}
         </div>
       </header>
       <div className="tabs" role="tablist">
