@@ -83,10 +83,15 @@ const COMERCIAL = [
     id: "forecast",
     ejemplo: "¿Cuál es el forecast y qué impacto tiene en la caja?",
     keys: ["forecast", "proyeccion", "proyectamos", "escenario", "escenarios", "impacto", "caja", "cerrar", "trimestre"],
-    responder() {
+    responder(texto, ctx = {}) {
       const f = comercial.forecast();
       const i = comercial.integracion("probable");
-      return `Forecast del trimestre [Elvis] [Tango]:\n\n${f.escenarios.map((e) => `- **${e.label}**: ${n(e.valor)} ARS M`).join("\n")}\n\nEl objetivo es ${n(f.objetivo)} M, así que en el escenario probable falta **${n(f.brecha, 1)} M**.\n\nImpacto en el resto de la compañía:\n- Finanzas: EBITDA de ${n(i.finanzas.ebitdaEscenario)} M contra ${n(i.finanzas.ebitdaBase)} M del base; la caja ${i.finanzas.cajaQuiebre ? `perfora el mínimo operativo en ${i.finanzas.cajaQuiebre}` : "se mantiene sobre el mínimo"}\n- Producción: ${n(i.produccion.unidadesRequeridas)} unidades, con ${n(i.produccion.faltante)} u de faltante en FPS50\n\nRecomendación: ${i.produccion.nota} [Ver la integración](#/comercial)`;
+      // La caja y el EBITDA solo se muestran a quien tiene acceso a Finanzas.
+      const verFinanzas = !ctx.puedeSolucion || ctx.puedeSolucion("finanzas");
+      const lineaFinanzas = verFinanzas
+        ? `EBITDA de ${n(i.finanzas.ebitdaEscenario)} M contra ${n(i.finanzas.ebitdaBase)} M del base; la caja ${i.finanzas.cajaQuiebre ? `perfora el mínimo operativo en ${i.finanzas.cajaQuiebre}` : "se mantiene sobre el mínimo"}`
+        : "hay impacto en caja y EBITDA, pero verlo requiere acceso a la solución Finanzas";
+      return `Forecast del trimestre [Elvis] [Tango]:\n\n${f.escenarios.map((e) => `- **${e.label}**: ${n(e.valor)} ARS M`).join("\n")}\n\nEl objetivo es ${n(f.objetivo)} M, así que en el escenario probable falta **${n(f.brecha, 1)} M**.\n\nImpacto en el resto de la compañía:\n- Finanzas: ${lineaFinanzas}\n- Producción: ${n(i.produccion.unidadesRequeridas)} unidades, con ${n(i.produccion.faltante)} u de faltante en FPS50\n\nRecomendación: ${i.produccion.nota} [Ver la integración](#/comercial)`;
     }
   },
   {
@@ -353,7 +358,7 @@ export const POR_AGENTE = {
 const stems = (s) => norm(s).split(/[^a-z0-9ñ]+/).filter((w) => w.length > 2).map((w) => w.slice(0, 5));
 
 /** Devuelve la respuesta de la consulta que mejor matchea, o null si ninguna alcanza. */
-export function responder(agentId, texto) {
+export function responder(agentId, texto, ctx = {}) {
   const lista = POR_AGENTE[agentId];
   if (!lista) return null;
   const tokens = new Set(stems(texto));
@@ -367,7 +372,7 @@ export function responder(agentId, texto) {
   }
   if (!mejor || mejor.score < 2.5) return null;
   try {
-    return mejor.consulta.responder(texto);
+    return mejor.consulta.responder(texto, ctx);
   } catch {
     return null;
   }

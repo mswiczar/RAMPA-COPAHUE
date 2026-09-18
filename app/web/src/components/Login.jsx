@@ -2,7 +2,7 @@ import { useState } from "react";
 import { api } from "../api.js";
 
 export default function Login({ onLogin }) {
-  const [user, setUser] = useState("ceo");
+  const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -13,7 +13,7 @@ export default function Login({ onLogin }) {
     setError(null);
     try {
       const r = await api.post("/api/auth/login", { user, password });
-      onLogin(r.user);
+      onLogin(r);
     } catch (err) {
       setError(err.message);
       setPassword("");
@@ -39,11 +39,11 @@ export default function Login({ onLogin }) {
         </div>
         <div className="field">
           <label htmlFor="login-user">Usuario</label>
-          <input id="login-user" autoComplete="username" value={user} onChange={(e) => setUser(e.target.value)} required />
+          <input id="login-user" autoComplete="username" value={user} onChange={(e) => setUser(e.target.value)} required autoFocus />
         </div>
         <div className="field">
           <label htmlFor="login-password">Contraseña</label>
-          <input id="login-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required autoFocus />
+          <input id="login-password" type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
         </div>
         {error && <p className="form-error" role="alert">{error}</p>}
         <button className="btn primary login-btn" type="submit" disabled={busy}>{busy ? "Ingresando…" : "Ingresar"}</button>

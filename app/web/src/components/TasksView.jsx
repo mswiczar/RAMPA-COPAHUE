@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { api } from "../api.js";
-import { useFetch } from "../live.jsx";
+import { useFetch, useSesion } from "../live.jsx";
 import { TYPES, TASK_STATUS, fmtDate, fmtRelative } from "../format.js";
 import { TaskStatus, AgentTag } from "./Status.jsx";
 import TaskForm from "./TaskForm.jsx";
@@ -51,6 +51,7 @@ export default function TasksView({ agents, focus }) {
 }
 
 function TaskRow({ task: t, agents, open, onToggle }) {
+  const { permisos } = useSesion();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
 
@@ -83,7 +84,7 @@ function TaskRow({ task: t, agents, open, onToggle }) {
               {t.recipients?.length > 0 && <p className="mini-meta">Para: {t.recipients.join(", ")}</p>}
               {t.plan && <pre className="plan">{t.plan}</pre>}
               <div className="actions">
-                {t.status === "esperando_aprobacion" && (
+                {t.status === "esperando_aprobacion" && permisos.aprobar && (
                   <>
                     <button className="btn primary" disabled={busy} onClick={() => decide(true)}>{t.type === "accion" ? "Aprobar acción" : "Aprobar y enviar"}</button>
                     <button className="btn" disabled={busy} onClick={() => decide(false)}>Rechazar</button>

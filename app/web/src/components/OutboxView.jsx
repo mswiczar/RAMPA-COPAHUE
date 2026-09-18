@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { api } from "../api.js";
-import { useFetch } from "../live.jsx";
+import { useFetch, useSesion } from "../live.jsx";
 import { EMAIL_STATUS, fmtDate, fmtRelative } from "../format.js";
 import { EmailStatus, AgentTag } from "./Status.jsx";
 
 export default function OutboxView({ agents, focus }) {
+  const { permisos } = useSesion();
   const [status, setStatus] = useState("");
   const { data: emails } = useFetch(`/api/emails${status ? `?status=${status}` : ""}`);
   const [selected, setSelected] = useState(focus || null);
@@ -64,7 +65,7 @@ export default function OutboxView({ agents, focus }) {
               </dl>
               <pre className="mail-body">{current.body}</pre>
               <div className="actions">
-                {current.status === "esperando_aprobacion" && (
+                {current.status === "esperando_aprobacion" && permisos.aprobar && (
                   <>
                     <button className="btn primary" disabled={busy} onClick={() => decide(true)}>Aprobar y enviar</button>
                     <button className="btn" disabled={busy} onClick={() => decide(false)}>Rechazar</button>

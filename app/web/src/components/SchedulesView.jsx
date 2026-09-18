@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { api } from "../api.js";
-import { useFetch } from "../live.jsx";
+import { useFetch, useSesion } from "../live.jsx";
 import { TYPES, fmtDate, fmtRelative, describeCron } from "../format.js";
 import { AgentTag } from "./Status.jsx";
 import TaskForm from "./TaskForm.jsx";
 
 export default function SchedulesView({ agents }) {
+  const { permisos } = useSesion();
   const { data: schedules, error } = useFetch("/api/schedules");
   const [editing, setEditing] = useState(null); // null | "new" | schedule
   const [busy, setBusy] = useState(null);
@@ -25,7 +26,7 @@ export default function SchedulesView({ agents }) {
           <h1>Programaciones</h1>
           <p className="muted">Reportes, mails e investigaciones que los agentes ejecutan solos, en hora de Buenos Aires.</p>
         </div>
-        <button className="btn primary" onClick={() => setEditing(editing ? null : "new")}>{editing ? "Cerrar" : "Nueva programación"}</button>
+        {permisos.programar && <button className="btn primary" onClick={() => setEditing(editing ? null : "new")}>{editing ? "Cerrar" : "Nueva programación"}</button>}
       </div>
 
       {editing && (
@@ -61,7 +62,7 @@ export default function SchedulesView({ agents }) {
                 <td>
                   <label className="switch">
                     <input
-                      type="checkbox" checked={s.enabled} disabled={busy === s.id}
+                      type="checkbox" checked={s.enabled} disabled={busy === s.id || !permisos.programar}
                       onChange={(e) => act(s.id, () => api.patch(`/api/schedules/${s.id}`, { enabled: e.target.checked }))}
                     />
                     <span aria-hidden="true" />
@@ -79,14 +80,14 @@ export default function SchedulesView({ agents }) {
                 </td>
                 <td className="num">{s.enabled ? <>{fmtDate(s.nextRunAt)}<span className="cell-sub">{fmtRelative(s.nextRunAt)}</span></> : "—"}</td>
                 <td className="num">{s.lastRunAt ? <>{fmtDate(s.lastRunAt)}<span className="cell-sub">{s.runs} ejecuciones</span></> : "Nunca"}</td>
-                <td className="row-actions">
+                <td className="row-actions">{permisos.programar && <>
                   <button className="btn small" disabled={busy === s.id} onClick={() => act(s.id, () => api.post(`/api/schedules/${s.id}/run`))}>Ejecutar ahora</button>
                   <button className="btn small ghost" onClick={() => setEditing(s)}>Editar</button>
                   <button
                     className="btn small ghost danger" disabled={busy === s.id}
                     onClick={() => window.confirm(`¿Eliminar «${s.name}»?`) && act(s.id, () => api.del(`/api/schedules/${s.id}`))}
                   >Eliminar</button>
-                </td>
+                </>}                </td>
               </tr>
             ))}
           </tbody>

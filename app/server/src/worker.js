@@ -14,7 +14,7 @@ export function normRecipients(value) {
   return [...new Set(clean)];
 }
 
-export function createTask({ agentId, type, title, instruction, recipients = [], source = "ceo", scheduleId = null, requiresApproval = true }, { run = true } = {}) {
+export function createTask({ agentId, type, title, instruction, recipients = [], source = "ceo", scheduleId = null, requiresApproval = true, pedidoPor = null }, { run = true } = {}) {
   const agent = byId[agentId];
   if (!agent) throw new HttpError(404, "No existe ese agente");
   if (!brain.TYPES[type]) throw new HttpError(400, "Tipo de tarea inválido");
@@ -27,7 +27,7 @@ export function createTask({ agentId, type, title, instruction, recipients = [],
     source, scheduleId, requiresApproval: requiresApproval !== false,
     status: "pendiente", createdAt: now(), startedAt: null, finishedAt: null,
     deliverableId: null, emailId: null,
-    log: [{ ts: now(), text: source === "programacion" ? "Creada por una programación" : "Encargada por el CEO" }]
+    log: [{ ts: now(), text: source === "programacion" ? "Creada por una programación" : `Encargada por ${pedidoPor || "el CEO"}` }], pedidoPor
   };
   db.tasks.unshift(task);
   logActivity(agentId, `Nueva tarea: ${task.title}`);
@@ -69,7 +69,7 @@ export function produce(task) {
   const needsApproval = task.type === "accion" || (email && task.requiresApproval);
   if (needsApproval) {
     task.status = "esperando_aprobacion";
-    step(task, "Esperando aprobación del CEO");
+    step(task, "Esperando aprobación de Dirección");
     logActivity(agent.id, `Pide aprobación: ${task.title}`);
   } else {
     if (email) {
@@ -103,7 +103,7 @@ export async function execute(taskId) {
   changed("tasks");
 }
 
-export function decide(taskId, approve) {
+export function decide(taskId, approve, actor = "el CEO") {
   const task = db.tasks.find((t) => t.id === taskId);
   if (!task) throw new HttpError(404, "No existe esa tarea");
   if (task.status !== "esperando_aprobacion") throw new HttpError(409, "La tarea no está esperando aprobación");
@@ -115,8 +115,8 @@ export function decide(taskId, approve) {
   task.status = approve ? "completada" : "rechazada";
   task.finishedAt = now();
   step(task, approve
-    ? email ? "Aprobada por el CEO. Mail enviado (simulado)" : "Aprobada por el CEO. Acción registrada (simulado)"
-    : "Rechazada por el CEO");
+    ? email ? `Aprobada por ${actor}. Mail enviado (simulado)` : `Aprobada por ${actor}. Acción registrada (simulado)`
+    : `Rechazada por ${actor}`);
   logActivity(task.agentId, `${approve ? "Aprobada" : "Rechazada"}: ${task.title}`);
   changed("tasks");
   changed("emails");

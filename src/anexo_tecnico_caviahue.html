@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Caviahue · Sala 24/7 · Anexo técnico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  @page { size: 13.333in 7.5in; margin: 0; }
+  :root {
+    --brand: #00a5dc; --brand-dark: #0b7cab; --brand-ink: #063d54;
+    --brand-soft: #e3f4fc; --brand-softer: #f4fbfe;
+    --ink: #0f2e3c; --muted: #5d7d8c; --faint: #93adb9;
+    --line: #cfe4ef; --line-soft: #e4f0f7;
+    --ok: #0f9d74; --warn: #dd8408; --crit: #d1453b;
+    --serif: "Source Serif 4", Georgia, serif;
+    --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    --pua: polygon(50% 0%, 78% 4%, 95% 22%, 97% 42%, 84% 72%, 62% 95%, 50% 100%, 38% 95%, 16% 72%, 3% 42%, 5% 22%, 22% 4%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); color: var(--ink); background: #888; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slide { width: 13.333in; height: 7.5in; position: relative; overflow: hidden; background: #fff; padding: 0.5in 0.65in 0.45in; page-break-after: always; break-after: page; display: flex; flex-direction: column; }
+  .slide:last-child { page-break-after: auto; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 700; letter-spacing: -0.015em; }
+  h2 { font-size: 30px; line-height: 1.12; }
+  h3 { font-size: 17px; line-height: 1.2; }
+  .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.17em; text-transform: uppercase; color: var(--brand-dark); margin-bottom: 7px; }
+  .lead { font-size: 14px; line-height: 1.5; color: var(--muted); margin-top: 8px; max-width: 8.6in; }
+  .foot { position: absolute; bottom: 0.24in; left: 0.65in; right: 0.65in; display: flex; justify-content: space-between; font-size: 9px; color: var(--faint); letter-spacing: 0.06em; }
+  .pua { width: 26px; height: 29px; background: var(--brand); clip-path: var(--pua); flex: none; }
+  .topbar { position: absolute; top: 0.32in; right: 0.65in; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+
+  /* Portada */
+  .cover { padding: 0.9in 0.95in; justify-content: center; background:
+      radial-gradient(ellipse 55% 60% at 88% 18%, var(--brand-soft), transparent 70%),
+      radial-gradient(ellipse 40% 50% at 12% 95%, #eaf7fd, transparent 70%), #fff; }
+  .cover .marca { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+  .cover .marca span { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--brand-dark); font-weight: 700; }
+  .cover h1 { font-size: 70px; line-height: 1.02; letter-spacing: -0.025em; }
+  .cover h1 em { font-style: normal; color: var(--brand); }
+  .cover .sub { font-size: 19px; line-height: 1.45; color: var(--muted); max-width: 7in; margin-top: 20px; }
+  .cover .tag { margin-top: 28px; font-family: var(--serif); font-size: 21px; color: var(--brand-dark); }
+  .pills { display: flex; gap: 8px; margin-top: 30px; flex-wrap: wrap; }
+  .pill { border: 1px solid var(--line); border-radius: 999px; padding: 7px 15px; font-size: 12px; color: var(--brand-dark); background: #fff; }
+  .cover .pua-grande { position: absolute; right: 1.1in; bottom: 0.9in; width: 2.6in; height: 2.9in; background: linear-gradient(160deg, var(--brand), #56c8ea); clip-path: var(--pua); opacity: 0.14; }
+
+  /* Bloques */
+  .body { flex: 1; display: flex; flex-direction: column; margin-top: 18px; min-height: 0; }
+  .shot { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 10px 28px rgba(15, 46, 60, 0.1); }
+  .shot img { width: 100%; display: block; }
+  .split { display: grid; grid-template-columns: 1.02fr 1fr; gap: 26px; flex: 1; min-height: 0; align-items: start; }
+  .split.ancho { grid-template-columns: 1.35fr 1fr; }
+  .split .shot { max-height: 5.4in; }
+  .puntos { display: flex; flex-direction: column; gap: 13px; }
+  .punto { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; }
+  .punto .n { width: 26px; height: 29px; background: var(--brand); clip-path: var(--pua); display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 700; }
+  .punto b { font-size: 14.5px; display: block; margin-bottom: 2px; }
+  .punto span { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+  .dato { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 14px; }
+  .dato div { border-top: 3px solid var(--brand-soft); padding-top: 8px; min-width: 1.5in; }
+  .dato b { display: block; font-family: var(--serif); font-size: 26px; line-height: 1.1; }
+  .dato span { font-size: 11.5px; color: var(--muted); }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; flex: 1; }
+  .card { background: var(--brand-softer); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 7px; }
+  .card h3 { color: var(--brand-ink); }
+  .card p { font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+  .card ul { margin: 0 0 0 16px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .card .pie { margin-top: auto; font-size: 11.5px; color: var(--brand-dark); font-weight: 600; }
+
+  .fila { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .fila div { border-left: 3px solid var(--brand); padding-left: 11px; }
+  .fila b { display: block; font-size: 13px; }
+  .fila span { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0 6px; margin-top: 8px; }
+  th { text-align: left; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 12px 2px; }
+  td { font-size: 12.5px; line-height: 1.4; padding: 10px 12px; vertical-align: middle; background: var(--brand-softer); }
+  td:first-child { border-radius: 8px 0 0 8px; font-weight: 600; width: 22%; }
+  td:last-child { border-radius: 0 8px 8px 0; color: var(--muted); }
+  .mono { font-family: var(--mono); font-size: 11.5px; }
+  .chip { display: inline-block; font-size: 10.5px; font-weight: 600; border-radius: 5px; padding: 1px 7px; }
+  .c-ok { background: #e6f6f1; color: #0b6b53; }
+  .c-brand { background: var(--brand-soft); color: var(--brand-ink); }
+  .c-warn { background: #fdf0e6; color: #8c3f12; }
+  .c-prox { background: #f0ecfb; color: #4e3a86; }
+</style>
+</head><body>
+<style>
+  .tt { width: 100%; border-collapse: separate; border-spacing: 0 4px; }
+  .tt th { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 0 10px 2px; }
+  .tt td { font-size: 11.5px; line-height: 1.4; padding: 7px 10px; background: var(--brand-softer); vertical-align: top; }
+  .tt td:first-child { font-weight: 600; border-radius: 7px 0 0 7px; }
+  .tt td:last-child { border-radius: 0 7px 7px 0; }
+  .cols2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; flex: 1; }
+  .cols3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .bloque h3 { font-size: 16px; margin-bottom: 6px; color: var(--brand-ink); }
+  .bloque p, .bloque li { font-size: 12.5px; line-height: 1.5; color: var(--ink); }
+  .bloque ul { margin-left: 16px; display: flex; flex-direction: column; gap: 4px; }
+  .bloque .nota { color: var(--muted); font-size: 11.5px; margin-top: 6px; }
+  .caja { background: var(--brand-softer); border-radius: 12px; padding: 14px 16px; }
+  .caja.oscura { background: var(--ink); color: #fff; }
+  .caja.oscura p, .caja.oscura li { color: #dbeef7; }
+  .caja.oscura h3 { color: #fff; }
+  .arq { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; align-items: stretch; margin-top: 6px; }
+  .capa { border-radius: 10px; padding: 14px 12px; min-height: 250px; display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; line-height: 1.4; background: var(--brand-softer); border: 1px solid var(--line); position: relative; }
+  .capa b { font-size: 14.5px; color: var(--brand-ink); }
+  .capa.hoy { border-color: var(--brand); }
+  .capa.oscura { background: var(--ink); color: #dbeef7; border-color: var(--ink); }
+  .capa.oscura b { color: #fff; }
+  .capa .tag { margin-top: auto; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; }
+  .t-real { color: #0b6b53; } .t-sim { color: #8c3f12; } .t-falta { color: #5d7d8c; }
+  .capa.oscura .t-real { color: #7fe0bf; }
+  .leyenda { display: flex; gap: 18px; font-size: 11px; margin-top: 10px; }
+  .estado { display: inline-block; font-size: 10px; font-weight: 700; border-radius: 5px; padding: 2px 7px; white-space: nowrap; }
+  .e-ok { background: #e6f6f1; color: #0b6b53; }
+  .e-medio { background: #fdf0e6; color: #8c3f12; }
+  .e-no { background: #eef2f5; color: #5d7d8c; }
+  .semanas { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .semana { border-top: 3px solid var(--brand); padding-top: 8px; font-size: 11.5px; line-height: 1.45; }
+  .semana b { display: block; font-size: 12.5px; margin-bottom: 4px; color: var(--brand-ink); }
+  .semana .gate { display: block; margin-top: 6px; font-size: 10.5px; color: var(--brand-dark); font-weight: 600; }
+</style>
+
+<!-- A1 · Portada -->
+<section class="slide cover">
+  <div class="pua-grande"></div>
+  <div class="marca"><span class="pua"></span><span>Caviahue · Sala 24/7 · Anexo técnico</span></div>
+  <h1 style="font-size:58px">Qué hay detrás<br>de las <em>pantallas</em></h1>
+  <p class="sub">Para CIO y CFO: arquitectura, qué es real y qué es simulado, integración con cada sistema, modelo de datos, seguridad, gobierno de los agentes, manejo de errores, modelos analíticos, IA y costos.</p>
+  <p class="tag">Escrito para que se pueda verificar, no para convencer.</p>
+</section>
+
+<!-- A2 · Arquitectura -->
+<section class="slide">
+  <div class="topbar">Arquitectura</div>
+  <div class="eyebrow">Siete capas</div>
+  <h2>De los sistemas de Caviahue a una decisión aprobada</h2>
+  <div class="body">
+    <div class="arq">
+      <div class="capa"><b>1 · Fuentes</b>Tango, Disprofarma, Ship Now, Shopify, Mercado Libre, Mercado Pago, Facturante, IQVia, Elvis, Bonus Dermo, Avanter, Capataz, Moondesk, WGSN, planillas y el mail diario de stock.<span class="tag t-falta">Falta conectar</span></div>
+      <div class="capa"><b>2 · Conectores</b>Uno por sistema: API cuando existe, lectura de base, archivos programados o buzón dedicado. Cada uno declara su frecuencia y su última actualización.<span class="tag t-falta">Falta construir</span></div>
+      <div class="capa"><b>3 · Datos comunes</b>Diccionario de productos, clientes, médicos, zonas, vendedores y períodos, con cola de excepciones para lo que no cierra.<span class="tag t-falta">Falta construir</span></div>
+      <div class="capa hoy"><b>4 · Soluciones</b>Métricas definidas una sola vez por solución: Comercial, Finanzas, Operaciones, Producción y R&amp;D.<span class="tag t-sim">Funciona con datos simulados</span></div>
+      <div class="capa hoy"><b>5 · Agentes</b>Consultas sobre las métricas, tareas, programaciones y entregables. Recomiendan; no ejecutan solos.<span class="tag t-sim">Funciona, sin IA todavía</span></div>
+      <div class="capa oscura"><b>6 · Gobierno</b>Usuarios por rol, confidencialidad por solución, aprobación humana y registro de auditoría.<span class="tag t-real">Funciona hoy</span></div>
+      <div class="capa oscura"><b>7 · Interfaz</b>La Sala en el navegador, con tiempo real y links directos a cada vista.<span class="tag t-real">Funciona hoy</span></div>
+    </div>
+    <div class="cols3" style="margin-top:18px">
+      <div class="bloque caja"><h3>Tecnología actual</h3><p>Node 22 con Express en el servidor, React con Vite en el navegador, programaciones con croner, actualización en vivo por Server-Sent Events. Servicio aislado en systemd, detrás de nginx con TLS de Let's Encrypt.</p></div>
+      <div class="bloque caja"><h3>Por qué por capas</h3><p>Cambiar una fuente (de datos simulados a Tango real) toca las capas 2 y 3. Las métricas, los agentes y las pantallas no cambian, siempre que el diccionario de datos resuelva las diferencias entre sistemas.</p></div>
+      <div class="bloque caja"><h3>Lo que no es</h3><p>No es un reemplazo del ERP ni del CRM: no escribe en ellos. Lee, cruza, analiza y prepara. Las acciones aprobadas se registran; ejecutarlas en los sistemas de origen es una decisión posterior, sistema por sistema.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A2</span></div>
+</section>
+
+<!-- A3 · Real vs simulado -->
+<section class="slide">
+  <div class="topbar">Estado actual</div>
+  <div class="eyebrow">Inventario honesto</div>
+  <h2>Qué es real hoy y qué es simulado</h2>
+  <div class="body">
+    <table class="tt">
+      <tr><th>Componente</th><th>Estado</th><th>Detalle</th></tr>
+      <tr><td>Interfaz, tableros y navegación</td><td><span class="estado e-ok">Real</span></td><td>Cinco soluciones, sala, tareas, programaciones, bandeja, entregables y auditoría, publicadas en copahue.moshito.work.</td></tr>
+      <tr><td>Usuarios, roles y auditoría</td><td><span class="estado e-ok">Real</span></td><td>Seis roles, contraseñas cifradas con scrypt, sesión firmada, permisos aplicados en el servidor y registro de toda acción.</td></tr>
+      <tr><td>Programaciones</td><td><span class="estado e-ok">Real</span></td><td>Corren de verdad a su hora (zona horaria de Buenos Aires) y generan tareas y entregables.</td></tr>
+      <tr><td>Flujo de aprobación</td><td><span class="estado e-ok">Real</span></td><td>Tareas, mails y acciones quedan esperando a Dirección, con registro de quién aprobó.</td></tr>
+      <tr><td>Datos de negocio</td><td><span class="estado e-medio">Simulado</span></td><td>Ventas, stock, caja, pipeline, proyectos y competencia son inventados, pero coherentes entre las cinco soluciones.</td></tr>
+      <tr><td>Chat de los agentes</td><td><span class="estado e-medio">Parcial</span></td><td>Responde un conjunto de preguntas por área con consultas deterministas sobre las métricas. No usa todavía un modelo de lenguaje.</td></tr>
+      <tr><td>Envío de mails y acciones</td><td><span class="estado e-medio">Simulado</span></td><td>Aprobar marca el mail como enviado y la acción como registrada, pero no sale nada del sistema.</td></tr>
+      <tr><td>Conectores a sistemas de Caviahue</td><td><span class="estado e-no">No existe</span></td><td>Es el trabajo principal de la propuesta. Ver la lámina de integración.</td></tr>
+      <tr><td>Base de datos y respaldos</td><td><span class="estado e-no">Provisorio</span></td><td>Hoy un archivo JSON en el servidor. Para producción: PostgreSQL con respaldo diario y restauración probada.</td></tr>
+      <tr><td>Ingreso con cuentas de la empresa</td><td><span class="estado e-no">No existe</span></td><td>Hoy usuario y contraseña propios. Para producción: Google o Microsoft de la empresa, con doble factor.</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A3</span></div>
+</section>
+
+<!-- A4 · Integración -->
+<section class="slide">
+  <div class="topbar">Integración</div>
+  <div class="eyebrow">Sistema por sistema</div>
+  <h2>Cómo se conecta cada fuente y qué puede salir mal</h2>
+  <div class="body">
+    <table class="tt">
+      <tr><th>Sistema</th><th>Qué aporta</th><th>Cómo se conecta</th><th>Frecuencia</th><th>Riesgo de calidad a resolver</th></tr>
+      <tr><td>Tango</td><td>Facturación, stock teórico, cuentas a cobrar y a pagar</td><td>Lectura de su base o exportación programada</td><td>Horaria</td><td>El stock teórico no coincide con el depósito; cierres contables</td></tr>
+      <tr><td>Disprofarma · Dispro360</td><td>Stock real, entregas, facturación a droguerías</td><td>Exportación programada o API a acordar</td><td>Horaria</td><td>Códigos de producto propios del operador</td></tr>
+      <tr><td>Ship Now</td><td>Stock y envíos del e-commerce</td><td>API o reportes programados</td><td>Horaria</td><td>Hoy se bajan planillas a mano</td></tr>
+      <tr><td>Shopify · Mercado Libre · Mercado Pago · Facturante</td><td>Venta online, comisiones, cobros, facturas</td><td>APIs oficiales</td><td>Cada 15 min</td><td>No están conectados a Tango: hay que conciliar órdenes, cobros y facturas</td></tr>
+      <tr><td>IQVia</td><td>Mercado por zona y segmento, share</td><td>Ingesta de los archivos que entrega</td><td>Según contrato</td><td>Códigos de presentación distintos a los de Tango</td></tr>
+      <tr><td>Elvis · Bonus Dermo</td><td>Visitas, médicos, recetas</td><td>API o exportación, a relevar con cada proveedor</td><td>Diaria</td><td>Datos personales (Ley 25.326); la matrícula es la clave común</td></tr>
+      <tr><td>Avanter · Sell Out</td><td>Descuentos liquidados y ventas de farmacias</td><td>Archivos programados</td><td>Semanal</td><td>Identificación de farmacia por CUIT y sucursal</td></tr>
+      <tr><td>Capataz</td><td>Demanda, plan de producción, costos por planta</td><td>A relevar: base, API o exportación</td><td>Diaria</td><td>Planifica sobre el stock de Tango, no sobre el real</td></tr>
+      <tr><td>Moondesk · WGSN</td><td>Packaging y tendencias</td><td>API de Moondesk; reportes de WGSN como documentos</td><td>Semanal</td><td>WGSN no es dato estructurado: se consulta por búsqueda en documentos</td></tr>
+      <tr><td>Presupuesto, grilla, mail de stock</td><td>Planes y relevamiento de tiendas</td><td>Dropbox y un buzón dedicado</td><td>Al cambiar / diaria</td><td>Versiones de planilla: se toma la vigente y se registra cuál</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A4</span></div>
+</section>
+
+<!-- A5 · Modelo de datos -->
+<section class="slide">
+  <div class="topbar">Modelo de datos</div>
+  <div class="eyebrow">El trabajo más pesado</div>
+  <h2>Un diccionario común para que los sistemas se puedan cruzar</h2>
+  <p class="lead">Sin esto, cada tablero inventa su propio número. Es lo que más tiempo lleva de la integración y lo que decide si el sistema sobrevive al dato real.</p>
+  <div class="body">
+    <div class="cols2">
+      <table class="tt">
+        <tr><th>Dimensión</th><th>Clave común</th><th>Equivalencias a mantener</th></tr>
+        <tr><td>Producto</td><td>SKU de Tango</td><td>EAN, troquel, presentación de IQVia, código de Disprofarma, SKU de Shopify y publicación de Mercado Libre</td></tr>
+        <tr><td>Cliente</td><td>CUIT</td><td>Sucursales, cadenas, cuentas de Avanter y de Disprofarma</td></tr>
+        <tr><td>Médico</td><td>Matrícula</td><td>Registro en Elvis y en Bonus Dermo</td></tr>
+        <tr><td>Zona</td><td>Código postal</td><td>Provincia, zona comercial y territorio del visitador</td></tr>
+        <tr><td>Vendedor</td><td>Legajo</td><td>Usuario de Elvis y cartera de clientes</td></tr>
+        <tr><td>Período</td><td>Fecha</td><td>Mes contable, ciclo promocional y trimestre comercial</td></tr>
+      </table>
+      <div class="bloque">
+        <div class="caja">
+          <h3>Qué pasa cuando algo no cierra</h3>
+          <ul>
+            <li>Un código sin equivalencia va a una <b>cola de excepciones</b> visible, con el dueño del dato asignado.</li>
+            <li>Nada se imputa en silencio: si una venta no tiene producto reconocido, cuenta como «sin clasificar», no se reparte.</li>
+            <li>Las diferencias entre sistemas (el stock de Tango contra el del depósito) no se corrigen solas: se muestran como alerta.</li>
+            <li>Cada cruce guarda qué regla lo resolvió, para poder auditarlo.</li>
+          </ul>
+        </div>
+        <p class="nota">La primera versión del diccionario se arma con el equipo de Caviahue en las semanas 2 y 3, y se mantiene como parte de la operación.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A5</span></div>
+</section>
+
+<!-- A6 · Seguridad -->
+<section class="slide">
+  <div class="topbar">Seguridad</div>
+  <div class="eyebrow">Identidad, permisos y trazabilidad</div>
+  <h2>Qué está implementado y qué falta para producción</h2>
+  <div class="body">
+    <div class="cols2">
+      <div class="bloque caja">
+        <h3>Implementado hoy</h3>
+        <ul>
+          <li><b>Contraseñas</b> cifradas con scrypt y sal por usuario, guardadas fuera del código.</li>
+          <li><b>Sesión</b> en una cookie firmada, HttpOnly, Secure y SameSite, que vence a las 12 horas.</li>
+          <li><b>Límite de intentos:</b> 8 fallidos por IP bloquean el ingreso 15 minutos.</li>
+          <li><b>Seis roles</b> con permisos aplicados en el servidor, no solo escondidos en la pantalla: cada pedido sin permiso devuelve un rechazo y queda registrado.</li>
+          <li><b>Confidencialidad:</b> caja, P&amp;L y portfolio de I+D restringidos por rol, también dentro de las respuestas del chat.</li>
+          <li><b>Auditoría:</b> ingreso, consulta, pregunta, encargo, programación, aprobación, rechazo e intentos denegados, con usuario, rol, fecha e IP.</li>
+          <li><b>Servidor:</b> TLS, servicio sin privilegios y con el sistema de archivos protegido.</li>
+        </ul>
+      </div>
+      <div class="bloque caja oscura">
+        <h3>Falta para producción</h3>
+        <ul>
+          <li>Ingreso con las cuentas de Google o Microsoft de la empresa, con doble factor.</li>
+          <li>Auditoría en base de datos, con retención definida y exportable.</li>
+          <li>Servidor dedicado y ambiente de prueba separado.</li>
+          <li>Contratos con los proveedores de IA con cláusula de no entrenamiento sobre datos de Caviahue.</li>
+          <li>Clasificación formal de datos y plan de respuesta a incidentes (la «Puerta Segura» de la propuesta RAMPA), según ISO/IEC 42001 y la Ley 25.326.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A6</span></div>
+</section>
+
+<!-- A7 · Gobierno de agentes -->
+<section class="slide">
+  <div class="topbar">Gobierno</div>
+  <div class="eyebrow">Quién controla a los agentes</div>
+  <h2>Reglas escritas antes de que un agente toque un dato real</h2>
+  <div class="body">
+    <div class="cols3">
+      <div class="bloque caja"><h3>Ficha de cada agente</h3><p>Alcance, fuentes, herramientas, límites y quién aprueba, por escrito. Un agente no puede consultar un sistema que no está en su ficha.</p></div>
+      <div class="bloque caja"><h3>Hereda los permisos de quien pregunta</h3><p>El agente nunca muestra un dato que el usuario no podría ver en su tablero. Hoy ya funciona así con la caja y el EBITDA.</p></div>
+      <div class="bloque caja"><h3>Nada con impacto sin aprobación</h3><p>Mails, órdenes, descuentos y notas de crédito esperan a Dirección. Los agentes preparan; las personas deciden.</p></div>
+      <div class="bloque caja"><h3>Recomendaciones que se contradicen</h3><p>Si Comercial y Finanzas llegan a conclusiones distintas, la Sala muestra las dos con su fundamento. No las promedia ni elige por su cuenta.</p></div>
+      <div class="bloque caja"><h3>Cambios versionados</h3><p>Reglas, fórmulas, consultas y fichas viven en el repositorio, con historial y versiones. Hoy van por la v0.6; cada despliegue es trazable.</p></div>
+      <div class="bloque caja"><h3>Fórmulas a la vista</h3><p>Todo análisis que no es un dato muestra su método. Los pesos del ranking de R&amp;D, por ejemplo, se calibran con Dirección y quedan documentados.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A7</span></div>
+</section>
+
+<!-- A8 · Errores -->
+<section class="slide">
+  <div class="topbar">Operación</div>
+  <div class="eyebrow">Cuando algo falla</div>
+  <h2>El sistema tiene que mostrar sus propios problemas</h2>
+  <div class="body">
+    <table class="tt">
+      <tr><th>Situación</th><th>Qué hace la Sala</th><th>Estado hoy</th></tr>
+      <tr><td>Una fuente no responde</td><td>El dato queda marcado como desactualizado, con la hora de la última lectura, y las alertas que dependen de él lo aclaran.</td><td><span class="estado e-no">A construir con los conectores</span></td></tr>
+      <tr><td>Un dato llega tarde</td><td>Cada fuente declara su frecuencia; si se pasa del umbral, avisa al responsable del conector.</td><td><span class="estado e-no">A construir</span></td></tr>
+      <tr><td>Una conciliación no cierra</td><td>La diferencia va a la cola de excepciones con su monto y su dueño. No se ajusta sola.</td><td><span class="estado e-medio">Diseñado; hoy se ve como alerta</span></td></tr>
+      <tr><td>Una tarea falla</td><td>Queda en estado «fallida», con el registro de cada paso y el error.</td><td><span class="estado e-ok">Funciona</span></td></tr>
+      <tr><td>El servidor se reinicia</td><td>Las tareas en curso se retoman solas y las programaciones se vuelven a armar.</td><td><span class="estado e-ok">Funciona</span></td></tr>
+      <tr><td>Alguien intenta algo sin permiso</td><td>Se rechaza en el servidor y queda en la auditoría con usuario e IP.</td><td><span class="estado e-ok">Funciona</span></td></tr>
+      <tr><td>La IA no sabe responder</td><td>Dice qué dato le falta y qué sistema habría que conectar, en lugar de inventar.</td><td><span class="estado e-ok">Funciona en el chat actual</span></td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A8</span></div>
+</section>
+
+<!-- A9 · Modelos -->
+<section class="slide">
+  <div class="topbar">Modelos analíticos</div>
+  <div class="eyebrow">Para el CFO</div>
+  <h2>Qué calcula cada modelo hoy y qué le falta para ser confiable</h2>
+  <div class="body">
+    <table class="tt">
+      <tr><th>Modelo</th><th>Cómo funciona hoy</th><th>Qué falta para producción</th></tr>
+      <tr><td>Caja a 13 semanas</td><td>Curva de cobranzas y egresos simulada, con los vencimientos grandes (sueldos, impuestos) marcados.</td><td>Cuentas a cobrar por vencimiento y comportamiento de pago de cada cliente; cuentas a pagar, sueldos, calendario de impuestos, deuda y cheques.</td></tr>
+      <tr><td>Sensibilidad financiera</td><td>Nueve variables que se mueven de forma independiente sobre los meses no cerrados.</td><td>Correlaciones (dólar a costos y a precios), capital de trabajo, estacionalidad, impuestos y límites de capacidad. Hasta entonces, se presenta como sensibilidad, no como modelo integral.</td></tr>
+      <tr><td>Forecast comercial</td><td>Cuatro métodos: declarado, probabilidad por etapa, histórico y una mezcla ajustada por la precisión de cada vendedor.</td><td>Probarlo contra trimestres pasados, sumar estacionalidad, recompra de la base instalada y capacidad de entrega.</td></tr>
+      <tr><td>Stock y cobertura</td><td>Stock real sobre demanda mensual, contra un objetivo de 45 días.</td><td>Demanda por producto y canal con la grilla promocional, y lead time real por planta.</td></tr>
+      <tr><td>Ranking de R&amp;D</td><td>Fórmula ponderada visible: valor esperado, probabilidad, tiempo al mercado, demora y riesgo.</td><td>Calibrar los pesos con Dirección y mostrar cuánto cambia el ranking si cambian los pesos.</td></tr>
+      <tr><td>Radar externo</td><td>Ítems curados, con fuente, fecha, confiabilidad y proyecto afectado.</td><td>Conectar las fuentes (publicaciones, INPI, ANMAT, WGSN) y una ontología de ingredientes, claims y patentes, con revisión humana de cada vínculo.</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A9</span></div>
+</section>
+
+<!-- A10 · IA y costos -->
+<section class="slide">
+  <div class="topbar">IA y costos</div>
+  <div class="eyebrow">Cómo entra la IA y cuánto cuesta gobernarla</div>
+  <h2>El modelo de lenguaje usa las mismas consultas que ya existen</h2>
+  <div class="body">
+    <div class="cols2">
+      <div class="bloque caja">
+        <h3>Cómo se conecta</h3>
+        <ul>
+          <li>Hoy el chat responde con consultas deterministas: sin IA, sin posibilidad de inventar.</li>
+          <li>El paso siguiente es un modelo de lenguaje que entiende preguntas libres y responde <b>usando esas mismas consultas como herramientas</b>. No escribe SQL libre contra las bases.</li>
+          <li>El modelo solo recibe los datos que el usuario que pregunta puede ver.</li>
+          <li>Cada respuesta cita sus fuentes; se registran la pregunta, las herramientas usadas y la respuesta.</li>
+          <li>Los proveedores de IA se contratan con cláusula de no entrenamiento sobre los datos de Caviahue.</li>
+        </ul>
+      </div>
+      <div class="bloque caja oscura">
+        <h3>Presupuesto de consumo</h3>
+        <ul>
+          <li>Cada agente arranca con un techo mensual y un costo por consulta medido desde el primer día.</li>
+          <li>Alerta al 80% del techo, antes de pasarse.</li>
+          <li>Modelos más chicos y rápidos para consultas simples; el más capaz solo para análisis complejos.</li>
+          <li>Caché de respuestas repetidas y procesamiento por lotes para lo que corre de noche.</li>
+          <li>Las programaciones consumen mucho más que un chat: se estiman por separado.</li>
+        </ul>
+        <p class="nota" style="color:#9fc3d4">El costo mensual se estima con el volumen real de consultas en las primeras semanas de uso, no antes.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A10</span></div>
+</section>
+
+<!-- A11 · Plan -->
+<section class="slide">
+  <div class="topbar">Plan de integración</div>
+  <div class="eyebrow">Seis semanas</div>
+  <h2>De datos simulados a Caviahue real, con una compuerta por semana</h2>
+  <div class="body">
+    <div class="semanas">
+      <div class="semana"><b>Semana 1</b>Accesos a cada sistema, relevamiento con los dueños del dato y línea de base de las seis métricas.<span class="gate">Línea de base firmada</span></div>
+      <div class="semana"><b>Semana 2</b>Conectores de Tango y Disprofarma. Primera versión del diccionario de productos y clientes.<span class="gate">Stock real contra ERP con datos reales</span></div>
+      <div class="semana"><b>Semana 3</b>Capataz, e-commerce y cola de excepciones. Diccionario de zonas y vendedores.<span class="gate">Faltante de producción calculado con datos reales</span></div>
+      <div class="semana"><b>Semana 4</b>Elvis, IQVia y Avanter. Ingreso con cuentas de la empresa y base de datos con respaldos.<span class="gate">Comercial y Finanzas sobre datos reales</span></div>
+      <div class="semana"><b>Semana 5</b>IA conectada con presupuesto de consumo, sobre las mismas consultas.<span class="gate">Preguntas libres con fuentes citadas</span></div>
+      <div class="semana"><b>Semana 6</b>Piloto con usuarios reales de cada área y primera medición contra la línea de base.<span class="gate">Informe de resultados</span></div>
+    </div>
+    <div class="cols3" style="margin-top:22px">
+      <div class="bloque caja"><h3>Qué necesitamos de Caviahue</h3><p>Un dueño de dato por sistema, accesos de lectura, y dos horas por semana de cada área para validar el diccionario y las excepciones.</p></div>
+      <div class="bloque caja"><h3>Qué puede atrasarlo</h3><p>Proveedores sin API (Elvis, Capataz, Avanter) y la calidad de los códigos de producto. Se detecta en la semana 1.</p></div>
+      <div class="bloque caja"><h3>Qué no cambia</h3><p>Las pantallas, los permisos y la auditoría que ya funcionan. El trabajo es debajo, en las capas 2 y 3.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7 · Anexo técnico</span><span>A11</span></div>
+</section>
+
+</body>
+</html>

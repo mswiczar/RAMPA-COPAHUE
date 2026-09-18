@@ -11,6 +11,7 @@ import ComercialView from "./components/ComercialView.jsx";
 import RDView from "./components/RDView.jsx";
 import OperacionesView from "./components/OperacionesView.jsx";
 import ProduccionView from "./components/ProduccionView.jsx";
+import AuditView from "./components/AuditView.jsx";
 
 function useRoute() {
   const read = () => (window.location.hash.replace(/^#\/?/, "") || "sala").split("/");
@@ -23,11 +24,18 @@ function useRoute() {
   return route;
 }
 
-export default function App({ user, onLogout }) {
+export default function App({ user, permisos, onLogout }) {
   const [view, param] = useRoute();
   const { data: agents } = useFetch("/api/agents");
   const { data: summary } = useFetch("/api/summary");
-  const agentId = view === "sala" ? param || "ceo" : null;
+  // Sin acceso al CEO, la sala abre en el primer agente que el rol puede ver.
+  const agenteInicial = permisos.agentes.includes("ceo") ? "ceo" : permisos.agentes[0];
+  const agentId = view === "sala" ? param || agenteInicial : null;
+  // Un rol sin agentes (solo lectura) entra directo a su primera solución.
+  useEffect(() => {
+    if (view === "sala" && !permisos.agentes.length && permisos.soluciones.length) window.location.hash = `#/${permisos.soluciones[0]}`;
+  }, [view, permisos]);
+  const puedeVer = (id) => ["comercial", "rd", "operaciones", "produccion", "finanzas"].includes(id) ? permisos.soluciones.includes(id) : id === "auditoria" ? permisos.auditoria : id === "sala" ? permisos.agentes.length > 0 : true;
 
   // En pantallas angostas el panel queda debajo de la sala: llevarlo a la vista al cambiar de agente.
   const firstAgent = useRef(true);
@@ -49,8 +57,9 @@ export default function App({ user, onLogout }) {
     ["tareas", "Tareas", summary?.pendingApprovals],
     ["programaciones", "Programaciones", null],
     ["bandeja", "Bandeja de salida", summary?.emailsPending],
-    ["entregables", "Entregables", null]
-  ];
+    ["entregables", "Entregables", null],
+    ["auditoria", "Auditoría", null]
+  ].filter(([id]) => puedeVer(id));
 
   return (
     <div className="app">
@@ -73,27 +82,42 @@ export default function App({ user, onLogout }) {
         <div className="top-meta">
           {summary && <span className="pill"><i className="dot live" />{summary.runningTasks} en curso · {summary.activeSchedules} programaciones</span>}
           <span className="pill">Datos simulados</span>
-          <button className="btn small ghost" type="button" onClick={onLogout} title={`Sesión: ${user}`}>Salir</button>
+          <span className="pill usuario" title="Sesión iniciada"><i className="rol-dot" />{user.nombre} · {user.rolLabel}</span>
+          <button className="btn small ghost" type="button" onClick={onLogout}>Salir</button>
         </div>
       </header>
 
       <main className="content">
-        {view === "sala" && (
+        {!puedeVer(view) && <SinPermiso vista={view} />}
+        {view === "sala" && puedeVer("sala") && (
           <div className="sala">
             <Room agents={agents || []} selected={agentId} />
             {agents && <AgentPanel key={agentId} agentId={agentId} agents={agents} />}
           </div>
         )}
-        {view === "comercial" && <ComercialView key={param} sub={param} />}
-        {view === "rd" && <RDView key={param} sub={param} />}
-        {view === "operaciones" && <OperacionesView key={param} sub={param} />}
-        {view === "produccion" && <ProduccionView key={param} sub={param} />}
-        {view === "finanzas" && <FinanzasView key={param} sub={param} />}
+        {view === "auditoria" && puedeVer("auditoria") && <AuditView />}
+        {view === "comercial" && puedeVer("comercial") && <ComercialView key={param} sub={param} />}
+        {view === "rd" && puedeVer("rd") && <RDView key={param} sub={param} />}
+        {view === "operaciones" && puedeVer("operaciones") && <OperacionesView key={param} sub={param} />}
+        {view === "produccion" && puedeVer("produccion") && <ProduccionView key={param} sub={param} />}
+        {view === "finanzas" && puedeVer("finanzas") && <FinanzasView key={param} sub={param} />}
         {view === "tareas" && <TasksView agents={agents || []} focus={param} />}
         {view === "programaciones" && <SchedulesView agents={agents || []} />}
         {view === "bandeja" && <OutboxView agents={agents || []} focus={param} />}
         {view === "entregables" && <DeliverablesView agents={agents || []} focus={param} />}
       </main>
+    </div>
+  );
+}
+
+function SinPermiso({ vista }) {
+  return (
+    <div className="page">
+      <div className="card">
+        <span className="eyebrow">Acceso restringido</span>
+        <h2>Tu rol no tiene acceso a esta sección</h2>
+        <p className="muted">La información de «{vista}» está reservada a los roles que la necesitan para decidir. Si te hace falta, pedíselo a Dirección.</p>
+      </div>
     </div>
   );
 }

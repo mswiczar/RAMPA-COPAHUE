@@ -420,6 +420,13 @@ code.cell-sub { font-size: 11.5px; }
 .table tr.propio td { background: var(--brand-softer); font-weight: 500; }
 .q-fill { position: absolute; top: 0; bottom: 0; }
 
+/* Sesión y auditoría */
+.pill.usuario { color: var(--brand-ink); border-color: var(--brand-soft); background: var(--brand-softer); font-weight: 500; }
+.rol-dot { width: 8px; height: 9px; background: var(--brand); clip-path: var(--pick); display: inline-block; }
+.table tr.rechazado td { background: #fdf3f2; }
+.table td.detalle { max-width: 340px; color: var(--muted); font-size: 12.5px; }
+.restringido { background: var(--ground-2); border: 1px dashed var(--line); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--muted); margin: 0; }
+
 /* Escenarios */
 .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
 .sliders { display: flex; flex-direction: column; gap: 10px; }
@@ -481,3 +488,12 @@ code.cell-sub { font-size: 11.5px; }
 @media (prefers-reduced-motion: reduce) {
   .sphere::after, .wires line.on, .working, .status.live i { animation: none; }
 }
+
+/* Recomendación del agente y avisos de criterio */
+.rec-tag { display: block; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--brand-dark); margin-bottom: 3px; }
+.aviso { border: 1px solid var(--brand); background: var(--brand-softer); border-radius: 12px; padding: 12px 16px; display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.aviso span { color: var(--muted); }
+.formula { margin: -4px 0 14px; font-size: 13px; }
+.formula summary { cursor: pointer; color: var(--brand-dark); font-weight: 500; }
+.formula p { margin: 8px 0 0; }
+.formula .mono { background: var(--ground-2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; white-space: normal; }

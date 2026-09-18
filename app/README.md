@@ -59,6 +59,7 @@ Variables de entorno:
 | `DATA_DIR` | `server/data` | Dónde se guarda `db.json` |
 | `APP_PASSWORD` | — | Si está definida, la app muestra una página de login |
 | `SESSION_SECRET` | aleatorio al arrancar | Firma de la cookie de sesión (definirla para que las sesiones sobrevivan reinicios) |
+| `USERS_FILE` | — | Archivo JSON con usuarios, roles y contraseñas cifradas (scrypt). Sin él, un solo usuario de Dirección con `APP_USER` y `APP_PASSWORD` |
 | `APP_USER` | `ceo` | Usuario del login |
 | `APP_TZ` | `America/Argentina/Buenos_Aires` | Zona horaria de las programaciones |
 

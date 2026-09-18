@@ -2,6 +2,8 @@ import express from "express";
 import path from "node:path";
 import fs from "node:fs";
 import * as auth from "./auth.js";
+import * as users from "./users.js";
+import * as audit from "./audit.js";
 import { fileURLToPath } from "node:url";
 import { db, bus, load, newId, now, changed, HttpError } from "./store.js";
 import { ALL, byId } from "./agents.js";
@@ -35,16 +37,16 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
-app.get("/api/summary", wrap(() => ({
-  pendingApprovals: db.tasks.filter((t) => t.status === "esperando_aprobacion").length,
-  runningTasks: db.tasks.filter((t) => ["pendiente", "en_curso"].includes(t.status)).length,
-  activeSchedules: db.schedules.filter((s) => s.enabled).length,
-  emailsPending: db.emails.filter((e) => e.status === "esperando_aprobacion").length,
-  deliverables: db.deliverables.length
+app.get("/api/summary", wrap((req) => ({
+  pendingApprovals: visibles(req, db.tasks).filter((t) => t.status === "esperando_aprobacion").length,
+  runningTasks: visibles(req, db.tasks).filter((t) => ["pendiente", "en_curso"].includes(t.status)).length,
+  activeSchedules: visibles(req, db.schedules).filter((s) => s.enabled).length,
+  emailsPending: visibles(req, db.emails).filter((e) => e.status === "esperando_aprobacion").length,
+  deliverables: visibles(req, db.deliverables).length
 })));
 
 app.get("/api/activity", wrap((req) => {
-  const list = req.query.agentId ? db.activity.filter((a) => a.agentId === req.query.agentId) : db.activity;
+  const list = visibles(req, req.query.agentId ? db.activity.filter((a) => a.agentId === req.query.agentId) : db.activity);
   return list.slice(0, Number(req.query.limit) || 50);
 }));
 
@@ -72,33 +74,60 @@ function agentSummary(a) {
   };
 }
 
-app.get("/api/agents", wrap(() => ALL.map(agentSummary)));
-app.get("/api/agents/:id", wrap((req) => agentSummary(agentOr404(req.params.id))));
-app.get("/api/agents/:id/messages", wrap((req) => { agentOr404(req.params.id); return db.messages[req.params.id] || []; }));
+/** Corta el pedido con 403 y deja constancia en la auditoría. */
+function exigir(condicion, req, accion, recurso, mensaje) {
+  if (condicion) return;
+  audit.registrar(req, accion, recurso, mensaje, "rechazado");
+  throw new HttpError(403, mensaje);
+}
+
+function agenteVisible(req, id) {
+  const agent = agentOr404(id);
+  exigir(users.puedeAgente(req.user, agent.id), req, "intentó acceder", agent.name, `Tu rol no tiene acceso al ${agent.name}`);
+  return agent;
+}
+
+const visibles = (req, lista, campo = "agentId") => lista.filter((x) => users.puedeAgente(req.user, x[campo]));
+
+app.get("/api/agents", wrap((req) => ALL.filter((a) => users.puedeAgente(req.user, a.id)).map(agentSummary)));
+app.get("/api/agents/:id", wrap((req) => agentSummary(agenteVisible(req, req.params.id))));
+app.get("/api/agents/:id/messages", wrap((req) => { agenteVisible(req, req.params.id); return db.messages[req.params.id] || []; }));
 
 app.post("/api/agents/:id/messages", wrap(async (req) => {
-  const agent = agentOr404(req.params.id);
+  const agent = agenteVisible(req, req.params.id);
   const content = String(req.body.content || "").trim();
   if (!content) throw new HttpError(400, "Escribí un mensaje");
+  audit.registrar(req, "preguntó", agent.name, content);
   const thread = (db.messages[agent.id] ||= []);
   const user = { id: newId("msg"), role: "user", content, ts: now() };
   thread.push(user);
   changed("messages");
 
   await wait(700 + Math.random() * 900);
-  const result = brain.chat(agent, content);
+  const result = brain.chat(agent, content, { puedeSolucion: (id) => users.puedeSolucion(req.user, id) });
   const reply = { id: newId("msg"), role: "agent", content: "", ts: null };
 
-  if (result.intent?.kind === "task") {
-    const { agentId, type, instruction, recipients } = result.intent;
-    const task = createTask({ agentId, type, instruction, recipients });
+  // Un encargo o una programación desde el chat respeta los mismos permisos que el formulario.
+  const intent = result.intent;
+  const bloqueo = intent && (!users.puedeAgente(req.user, intent.agentId)
+    ? `Tu rol no puede encargarle trabajo al ${byId[intent.agentId].name}.`
+    : intent.kind === "schedule" && !users.puede(req.user, "programar") ? "Tu rol no puede crear programaciones." : null);
+
+  if (bloqueo) {
+    audit.registrar(req, intent.kind === "schedule" ? "intentó programar" : "intentó encargar", byId[intent.agentId].name, bloqueo, "rechazado");
+    reply.content = `${bloqueo} Pedíselo a alguien de Dirección.`;
+  } else if (intent?.kind === "task") {
+    const { agentId, type, instruction, recipients } = intent;
+    const task = createTask({ agentId, type, instruction, recipients, pedidoPor: req.user.nombre });
+    audit.registrar(req, "encargó", byId[agentId].name, task.title);
     const who = agentId !== agent.id ? `Se lo encargué al **${byId[agentId].name}**. ` : "Lo tomo. ";
     const approval = type === "accion" || recipients.length || type === "email" ? " Antes de enviar o ejecutar te voy a pedir aprobación." : "";
     reply.content = `${who}Creé la tarea **${task.title}** (${brain.TYPES[type]}).${approval}${recipients.length ? `\n\nDestinatarios: ${recipients.join(", ")}` : ""}`;
     reply.taskId = task.id;
-  } else if (result.intent?.kind === "schedule") {
-    const { agentId, type, instruction, recipients, schedule } = result.intent;
+  } else if (intent?.kind === "schedule") {
+    const { agentId, type, instruction, recipients, schedule } = intent;
     const s = scheduler.create({ agentId, type, name: brain.titleFrom(type, instruction), instruction, recipients, cron: schedule.cron });
+    audit.registrar(req, "programó", byId[agentId].name, `${s.name} · ${s.cron}`);
     const when = s.nextRunAt ? new Intl.DateTimeFormat("es-AR", { timeZone: scheduler.TZ, dateStyle: "full", timeStyle: "short" }).format(new Date(s.nextRunAt)) : "—";
     reply.content = `Programado para **${schedule.label}**: ${s.name} (${brain.TYPES[type]}, cron \`${s.cron}\`).\n\nPróxima ejecución: ${when}${agentId !== agent.id ? `\n\nLo va a ejecutar el **${byId[agentId].name}**.` : ""}`;
     reply.scheduleId = s.id;
@@ -114,20 +143,70 @@ app.post("/api/agents/:id/messages", wrap(async (req) => {
 
 /* ---------- Tareas ---------- */
 
-app.get("/api/tasks", wrap((req) => db.tasks.filter((t) =>
+app.get("/api/tasks", wrap((req) => visibles(req, db.tasks).filter((t) =>
   (!req.query.agentId || t.agentId === req.query.agentId) && (!req.query.status || t.status === req.query.status))));
-app.get("/api/tasks/:id", wrap((req) => { const t = db.tasks.find((x) => x.id === req.params.id); if (!t) throw new HttpError(404, "No existe esa tarea"); return t; }));
-app.post("/api/tasks", wrap((req, res) => { res.status(201); return createTask({ ...req.body, source: "ceo" }); }));
-app.post("/api/tasks/:id/approve", wrap((req) => decide(req.params.id, true)));
-app.post("/api/tasks/:id/reject", wrap((req) => decide(req.params.id, false)));
+app.get("/api/tasks/:id", wrap((req) => {
+  const t = db.tasks.find((x) => x.id === req.params.id);
+  if (!t) throw new HttpError(404, "No existe esa tarea");
+  agenteVisible(req, t.agentId);
+  return t;
+}));
+app.post("/api/tasks", wrap((req, res) => {
+  agenteVisible(req, req.body.agentId);
+  const task = createTask({ ...req.body, source: "ceo", pedidoPor: req.user.nombre });
+  audit.registrar(req, "encargó", byId[task.agentId].name, task.title);
+  res.status(201);
+  return task;
+}));
+
+function decidir(req, id, aprobar) {
+  const t = db.tasks.find((x) => x.id === id);
+  if (!t) throw new HttpError(404, "No existe esa tarea");
+  exigir(users.puede(req.user, "aprobar"), req, aprobar ? "intentó aprobar" : "intentó rechazar", t.title, "Tu rol no puede aprobar ni rechazar. Lo decide Dirección.");
+  const resultado = decide(id, aprobar, `${req.user.nombre} (${req.user.rolLabel})`);
+  audit.registrar(req, aprobar ? "aprobó" : "rechazó", t.title, byId[t.agentId].name);
+  return resultado;
+}
+app.post("/api/tasks/:id/approve", wrap((req) => decidir(req, req.params.id, true)));
+app.post("/api/tasks/:id/reject", wrap((req) => decidir(req, req.params.id, false)));
 
 /* ---------- Programaciones ---------- */
 
-app.get("/api/schedules", wrap((req) => db.schedules.filter((s) => !req.query.agentId || s.agentId === req.query.agentId)));
-app.post("/api/schedules", wrap((req, res) => { res.status(201); return scheduler.create(req.body); }));
-app.patch("/api/schedules/:id", wrap((req) => scheduler.update(req.params.id, req.body)));
-app.delete("/api/schedules/:id", wrap((req) => { scheduler.remove(req.params.id); return { ok: true }; }));
-app.post("/api/schedules/:id/run", wrap((req) => scheduler.fire(req.params.id, true)));
+function puedeProgramar(req, agentId, accion) {
+  exigir(users.puede(req.user, "programar"), req, `intentó ${accion}`, "Programaciones", "Tu rol no puede crear ni modificar programaciones.");
+  agenteVisible(req, agentId);
+}
+const programacion = (id) => { const s = db.schedules.find((x) => x.id === id); if (!s) throw new HttpError(404, "No existe esa programación"); return s; };
+
+app.get("/api/schedules", wrap((req) => visibles(req, db.schedules).filter((s) => !req.query.agentId || s.agentId === req.query.agentId)));
+app.post("/api/schedules", wrap((req, res) => {
+  puedeProgramar(req, req.body.agentId, "programar");
+  const s = scheduler.create(req.body);
+  audit.registrar(req, "programó", byId[s.agentId].name, `${s.name} · ${s.cron}`);
+  res.status(201);
+  return s;
+}));
+app.patch("/api/schedules/:id", wrap((req) => {
+  const previa = programacion(req.params.id);
+  puedeProgramar(req, req.body.agentId || previa.agentId, "modificar");
+  const s = scheduler.update(req.params.id, req.body);
+  const cambio = req.body.enabled === undefined ? "editó" : req.body.enabled ? "activó" : "pausó";
+  audit.registrar(req, `${cambio} programación`, s.name, s.cron);
+  return s;
+}));
+app.delete("/api/schedules/:id", wrap((req) => {
+  const s = programacion(req.params.id);
+  puedeProgramar(req, s.agentId, "eliminar");
+  scheduler.remove(req.params.id);
+  audit.registrar(req, "eliminó programación", s.name);
+  return { ok: true };
+}));
+app.post("/api/schedules/:id/run", wrap((req) => {
+  const s = programacion(req.params.id);
+  puedeProgramar(req, s.agentId, "ejecutar");
+  audit.registrar(req, "ejecutó a mano", s.name);
+  return scheduler.fire(req.params.id, true);
+}));
 app.get("/api/cron/preview", wrap((req) => ({ next: scheduler.nextRun(String(req.query.expr || "")) })));
 
 /* ---------- Geografía (mapas) ---------- */
@@ -137,7 +216,23 @@ app.get("/api/geo/provincias", wrap((req, res) => { res.set("Cache-Control", "pu
 
 /* ---------- Soluciones (tableros por agente) ---------- */
 
-app.get("/api/solutions", wrap(() => [finanzas.META, comercial.META, rd.META, operaciones.META, produccion.META].map(({ id, agentId, titulo, bajada }) => ({ id, agentId, titulo, bajada }))));
+const SOLUCIONES = { finanzas: finanzas.META, comercial: comercial.META, rd: rd.META, operaciones: operaciones.META, produccion: produccion.META };
+
+// Cada solución se abre solo para los roles que la necesitan; los intentos sin permiso quedan registrados.
+app.use("/api/solutions/:sol", (req, res, next) => {
+  const meta = SOLUCIONES[req.params.sol];
+  if (!meta) return next();
+  if (!users.puedeSolucion(req.user, meta.id)) {
+    audit.registrar(req, "intentó consultar", meta.titulo, "Sin permiso para esta solución", "rechazado");
+    return res.status(403).json({ error: `Tu rol no tiene acceso a la ${meta.titulo}` });
+  }
+  audit.consulta(req, meta.titulo);
+  next();
+});
+
+app.get("/api/solutions", wrap((req) => Object.values(SOLUCIONES)
+  .filter((m) => users.puedeSolucion(req.user, m.id))
+  .map(({ id, agentId, titulo, bajada }) => ({ id, agentId, titulo, bajada }))));
 
 app.get("/api/solutions/finanzas", wrap(() => ({
   meta: finanzas.META,
@@ -162,6 +257,7 @@ app.post("/api/solutions/finanzas/escenario", wrap((req) => {
     if (Number.isNaN(n)) throw new HttpError(400, `Valor inválido para ${v.label}`);
     deltas[v.id] = Math.min(v.max, Math.max(v.min, n));
   }
+  if (Object.keys(deltas).length) audit.registrar(req, "simuló escenario", "Solución Finanzas", Object.entries(deltas).map(([k, v]) => `${k} ${v > 0 ? "+" : ""}${v}`).join(", "));
   return finanzas.escenario(deltas);
 }));
 
@@ -178,7 +274,12 @@ app.get("/api/solutions/rd/inversion", wrap((req) => {
   if (!Number.isFinite(monto) || monto <= 0) throw new HttpError(400, "El monto tiene que ser un número mayor a cero");
   return rd.inversionAdicional(Math.min(2000, monto));
 }));
-app.get("/api/solutions/comercial/integracion", wrap((req) => comercial.integracion(String(req.query.escenario || "probable"))));
+app.get("/api/solutions/comercial/integracion", wrap((req) => {
+  const integ = comercial.integracion(String(req.query.escenario || "probable"));
+  // Quien no tiene acceso a Finanzas ve que hay impacto, pero no la caja ni el EBITDA.
+  if (!users.puedeSolucion(req.user, "finanzas")) integ.finanzas = { restringido: true, nota: "El impacto en caja y EBITDA requiere acceso a la solución Finanzas" };
+  return integ;
+}));
 
 app.get("/api/solutions/operaciones", wrap(() => operaciones.resumen()));
 app.get("/api/solutions/produccion", wrap(() => produccion.resumen()));
@@ -189,17 +290,34 @@ app.get("/api/solutions/produccion/simular", wrap((req) => produccion.simular({
 
 /* ---------- Entregables y bandeja de salida ---------- */
 
-app.get("/api/deliverables", wrap((req) => db.deliverables
+app.get("/api/deliverables", wrap((req) => visibles(req, db.deliverables)
   .filter((d) => !req.query.agentId || d.agentId === req.query.agentId)
   .map(({ content, ...rest }) => rest)));
-app.get("/api/deliverables/:id", wrap((req) => { const d = db.deliverables.find((x) => x.id === req.params.id); if (!d) throw new HttpError(404, "No existe ese entregable"); return d; }));
+app.get("/api/deliverables/:id", wrap((req) => {
+  const d = db.deliverables.find((x) => x.id === req.params.id);
+  if (!d) throw new HttpError(404, "No existe ese entregable");
+  agenteVisible(req, d.agentId);
+  audit.consulta(req, `Entregable: ${d.title}`);
+  return d;
+}));
 
-app.get("/api/emails", wrap((req) => db.emails.filter((e) => !req.query.status || e.status === req.query.status)));
+app.get("/api/emails", wrap((req) => visibles(req, db.emails).filter((e) => !req.query.status || e.status === req.query.status)));
 app.post("/api/emails/:id/:decision(approve|reject)", wrap((req) => {
   const e = db.emails.find((x) => x.id === req.params.id);
   if (!e) throw new HttpError(404, "No existe ese mail");
-  decide(e.taskId, req.params.decision === "approve");
+  decidir(req, e.taskId, req.params.decision === "approve");
   return e;
+}));
+
+/* ---------- Auditoría y permisos ---------- */
+
+app.get("/api/audit", wrap((req) => {
+  exigir(users.puede(req.user, "auditoria"), req, "intentó ver", "Auditoría", "Tu rol no tiene acceso a la auditoría.");
+  return audit.listar({ usuario: req.query.usuario || undefined, accion: req.query.accion || undefined, limite: Math.min(1000, Number(req.query.limite) || 300) });
+}));
+app.get("/api/roles", wrap((req) => {
+  exigir(users.puede(req.user, "auditoria"), req, "intentó ver", "Roles y permisos", "Tu rol no tiene acceso a la configuración de permisos.");
+  return { roles: users.ROLES, usuarios: users.listarUsuarios() };
 }));
 
 app.use("/api", (req, res) => res.status(404).json({ error: "Ruta inexistente" }));

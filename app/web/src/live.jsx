@@ -33,3 +33,7 @@ export function useFetch(url) {
   }, [url, tick]);
   return state;
 }
+
+/** Sesión del usuario: quién es y qué puede ver o hacer. */
+export const SesionContext = createContext({ user: null, permisos: { soluciones: [], agentes: [], aprobar: false, programar: false, auditoria: false } });
+export const useSesion = () => useContext(SesionContext);

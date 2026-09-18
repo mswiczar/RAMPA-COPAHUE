@@ -21,6 +21,8 @@ Todos los datos de negocio de la app son **simulados**. No inventar datos presen
 | Servicio | `copahue-sala.service` (systemd, usuario `www-data`, `127.0.0.1:3200`) |
 | Secretos | `/etc/copahue/copahue.env` (`APP_USER`, `APP_PASSWORD`, `SESSION_SECRET`, modo 600). No se commitea |
 | Acceso | Página de login propia con sesión en cookie HttpOnly (12 h). No usa Basic Auth |
+| Usuarios | `/etc/copahue/usuarios.json` (`USERS_FILE`): usuario, nombre, rol y hash scrypt. Roles: direccion, finanzas, comercial, operaciones, rd, consulta. Las contraseñas iniciales quedaron en `/root/copahue-usuarios-iniciales.txt` (modo 600): borrarlo después de entregarlas |
+| Auditoría | En `db.json` (`audit`, últimos 5.000 registros). Visible en la app para el rol Dirección |
 | nginx | `/etc/nginx/sites-available/copahue.moshito.work` (symlink en `sites-enabled`) |
 | TLS | Let's Encrypt propio: `/etc/letsencrypt/live/copahue.moshito.work` (webroot `/var/www/acme`, se renueva con certbot). Cloudflare está en Full (strict), así que cada subdominio necesita su propio certificado |
 | Logs | `journalctl -u copahue-sala`, `/var/log/nginx/copahue-moshito-work.*.log` |

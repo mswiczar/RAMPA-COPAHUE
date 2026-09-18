@@ -3,7 +3,7 @@ import { api } from "../api.js";
 import { useFetch } from "../live.jsx";
 import { RankBars, fmtM, fmtPct } from "./charts.jsx";
 
-const TABS = [["tablero", "Tablero"], ["proyectos", "Proyectos"], ["radar", "Radar"], ["competencia", "Competencia"], ["decision", "Decisión"]];
+const TABS = [["tablero", "Tablero"], ["proyectos", "Proyectos"], ["radar", "Radar"], ["competencia", "Competencia"], ["decision", "Recomendaciones"]];
 const ESTADO_LABEL = { conciliado: "Conciliado", operativo: "Operativo", proyectado: "Proyectado", estimado: "Estimado" };
 const Tipo = ({ tipo }) => <span className={`tipo tipo-${tipo}`}>{ESTADO_LABEL[tipo] || tipo}</span>;
 const ETAPAS = ["Idea", "Investigación", "Prototipo", "Validación", "Desarrollo", "Lanzamiento"];
@@ -293,8 +293,17 @@ function Decision({ decision }) {
   const { data: plan } = useFetch(`/api/solutions/rd/inversion?monto=${monto}`);
   return (
     <div className="solution">
+      <section className="aviso">
+        <strong>El agente recomienda y fundamenta. Decide el ejecutivo.</strong>
+        <span>Nada de esta pestaña es un dato: es un análisis sobre datos, con una fórmula a la vista para que se pueda discutir.</span>
+      </section>
       <section className="card wide">
         <div className="card-head"><h2>Ranking por atractivo estratégico</h2><Tipo tipo="estimado" /></div>
+        <details className="formula">
+          <summary>Cómo se calcula el atractivo</summary>
+          <p className="mono">atractivo = valor esperado ÷ 10 + probabilidad de éxito × 0,6 − meses al mercado × 1,2 − 8 si está demorado − penalidad por riesgo (10 alto, 3 medio)</p>
+          <p className="muted small">Valor esperado = ventas anuales esperadas × margen × probabilidad técnica × probabilidad comercial, descontado por el tiempo al mercado, menos lo que falta invertir. Los pesos son un punto de partida para calibrar con Dirección, no una verdad del modelo.</p>
+        </details>
         <div className="table-wrap">
           <table className="table">
             <thead><tr><th scope="col">#</th><th scope="col">Proyecto</th><th scope="col" className="num">Valor esperado</th><th scope="col" className="num">Éxito</th><th scope="col" className="num">Meses</th><th scope="col">Recomendación</th></tr></thead>

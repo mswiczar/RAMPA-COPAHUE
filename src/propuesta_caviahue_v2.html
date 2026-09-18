@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Caviahue · Sala 24/7 · Propuesta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  @page { size: 13.333in 7.5in; margin: 0; }
+  :root {
+    --brand: #00a5dc; --brand-dark: #0b7cab; --brand-ink: #063d54;
+    --brand-soft: #e3f4fc; --brand-softer: #f4fbfe;
+    --ink: #0f2e3c; --muted: #5d7d8c; --faint: #93adb9;
+    --line: #cfe4ef; --line-soft: #e4f0f7;
+    --ok: #0f9d74; --warn: #dd8408; --crit: #d1453b;
+    --serif: "Source Serif 4", Georgia, serif;
+    --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    --pua: polygon(50% 0%, 78% 4%, 95% 22%, 97% 42%, 84% 72%, 62% 95%, 50% 100%, 38% 95%, 16% 72%, 3% 42%, 5% 22%, 22% 4%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); color: var(--ink); background: #888; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slide { width: 13.333in; height: 7.5in; position: relative; overflow: hidden; background: #fff; padding: 0.5in 0.65in 0.45in; page-break-after: always; break-after: page; display: flex; flex-direction: column; }
+  .slide:last-child { page-break-after: auto; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 700; letter-spacing: -0.015em; }
+  h2 { font-size: 30px; line-height: 1.12; }
+  h3 { font-size: 17px; line-height: 1.2; }
+  .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.17em; text-transform: uppercase; color: var(--brand-dark); margin-bottom: 7px; }
+  .lead { font-size: 14px; line-height: 1.5; color: var(--muted); margin-top: 8px; max-width: 8.6in; }
+  .foot { position: absolute; bottom: 0.24in; left: 0.65in; right: 0.65in; display: flex; justify-content: space-between; font-size: 9px; color: var(--faint); letter-spacing: 0.06em; }
+  .pua { width: 26px; height: 29px; background: var(--brand); clip-path: var(--pua); flex: none; }
+  .topbar { position: absolute; top: 0.32in; right: 0.65in; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+
+  /* Portada */
+  .cover { padding: 0.9in 0.95in; justify-content: center; background:
+      radial-gradient(ellipse 55% 60% at 88% 18%, var(--brand-soft), transparent 70%),
+      radial-gradient(ellipse 40% 50% at 12% 95%, #eaf7fd, transparent 70%), #fff; }
+  .cover .marca { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+  .cover .marca span { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--brand-dark); font-weight: 700; }
+  .cover h1 { font-size: 70px; line-height: 1.02; letter-spacing: -0.025em; }
+  .cover h1 em { font-style: normal; color: var(--brand); }
+  .cover .sub { font-size: 19px; line-height: 1.45; color: var(--muted); max-width: 7in; margin-top: 20px; }
+  .cover .tag { margin-top: 28px; font-family: var(--serif); font-size: 21px; color: var(--brand-dark); }
+  .pills { display: flex; gap: 8px; margin-top: 30px; flex-wrap: wrap; }
+  .pill { border: 1px solid var(--line); border-radius: 999px; padding: 7px 15px; font-size: 12px; color: var(--brand-dark); background: #fff; }
+  .cover .pua-grande { position: absolute; right: 1.1in; bottom: 0.9in; width: 2.6in; height: 2.9in; background: linear-gradient(160deg, var(--brand), #56c8ea); clip-path: var(--pua); opacity: 0.14; }
+
+  /* Bloques */
+  .body { flex: 1; display: flex; flex-direction: column; margin-top: 18px; min-height: 0; }
+  .shot { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 10px 28px rgba(15, 46, 60, 0.1); }
+  .shot img { width: 100%; display: block; }
+  .split { display: grid; grid-template-columns: 1.02fr 1fr; gap: 26px; flex: 1; min-height: 0; align-items: start; }
+  .split.ancho { grid-template-columns: 1.35fr 1fr; }
+  .split .shot { max-height: 5.4in; }
+  .puntos { display: flex; flex-direction: column; gap: 13px; }
+  .punto { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; }
+  .punto .n { width: 26px; height: 29px; background: var(--brand); clip-path: var(--pua); display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 700; }
+  .punto b { font-size: 14.5px; display: block; margin-bottom: 2px; }
+  .punto span { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+  .dato { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 14px; }
+  .dato div { border-top: 3px solid var(--brand-soft); padding-top: 8px; min-width: 1.5in; }
+  .dato b { display: block; font-family: var(--serif); font-size: 26px; line-height: 1.1; }
+  .dato span { font-size: 11.5px; color: var(--muted); }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; flex: 1; }
+  .card { background: var(--brand-softer); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 7px; }
+  .card h3 { color: var(--brand-ink); }
+  .card p { font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+  .card ul { margin: 0 0 0 16px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .card .pie { margin-top: auto; font-size: 11.5px; color: var(--brand-dark); font-weight: 600; }
+
+  .fila { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .fila div { border-left: 3px solid var(--brand); padding-left: 11px; }
+  .fila b { display: block; font-size: 13px; }
+  .fila span { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0 6px; margin-top: 8px; }
+  th { text-align: left; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 12px 2px; }
+  td { font-size: 12.5px; line-height: 1.4; padding: 10px 12px; vertical-align: middle; background: var(--brand-softer); }
+  td:first-child { border-radius: 8px 0 0 8px; font-weight: 600; width: 22%; }
+  td:last-child { border-radius: 0 8px 8px 0; color: var(--muted); }
+  .mono { font-family: var(--mono); font-size: 11.5px; }
+  .chip { display: inline-block; font-size: 10.5px; font-weight: 600; border-radius: 5px; padding: 1px 7px; }
+  .c-ok { background: #e6f6f1; color: #0b6b53; }
+  .c-brand { background: var(--brand-soft); color: var(--brand-ink); }
+  .c-warn { background: #fdf0e6; color: #8c3f12; }
+  .c-prox { background: #f0ecfb; color: #4e3a86; }
+</style>
+</head><body>
+<style>
+  .cmp { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
+  .cmp th { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); text-align: left; padding: 0 12px 2px; }
+  .cmp td { font-size: 12px; padding: 9px 12px; background: var(--brand-softer); vertical-align: top; line-height: 1.4; }
+  .cmp td:first-child { font-weight: 600; border-radius: 8px 0 0 8px; width: 24%; }
+  .cmp td:last-child { border-radius: 0 8px 8px 0; background: var(--brand-soft); color: var(--brand-ink); }
+  .cmp td.no { color: var(--muted); }
+  .niveles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .nivel { border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
+  .nivel h3 { font-size: 20px; }
+  .nivel p { font-size: 12.5px; line-height: 1.5; }
+  .nivel .ej { margin-top: auto; font-size: 11.5px; border-top: 1px solid rgba(15,46,60,.12); padding-top: 8px; }
+  .n1 { background: var(--brand-softer); border: 1px solid var(--line); }
+  .n2 { background: var(--brand-soft); }
+  .n3 { background: var(--ink); color: #fff; }
+  .n3 p, .n3 .ej { color: #cfe4ef; }
+  .madurez td:nth-child(2) { width: 16%; }
+  .estado { display: inline-block; font-size: 10.5px; font-weight: 700; border-radius: 5px; padding: 2px 8px; white-space: nowrap; }
+  .e-ok { background: #e6f6f1; color: #0b6b53; }
+  .e-medio { background: #fdf0e6; color: #8c3f12; }
+  .e-no { background: #eef2f5; color: #5d7d8c; }
+  .metricas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .metrica { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 5px; }
+  .metrica b { font-size: 14px; }
+  .metrica span { font-size: 12px; color: var(--muted); line-height: 1.45; }
+  .metrica .como { margin-top: auto; font-size: 11px; color: var(--brand-dark); font-weight: 600; }
+  .estados { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; flex: 1; }
+  .estados div { padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; border-top: 4px solid var(--brand-soft); }
+  .estados div:nth-child(2) { border-top-color: var(--brand); }
+  .estados div:nth-child(3) { border-top-color: var(--ink); }
+  .estados h3 { font-size: 24px; }
+  .estados .cuando { font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--brand-dark); font-weight: 700; }
+  .estados ul { margin-left: 16px; font-size: 13px; line-height: 1.55; color: var(--muted); }
+  .estados p { font-size: 13.5px; }
+  .tesis { font-family: var(--serif); font-size: 44px; line-height: 1.1; letter-spacing: -0.02em; max-width: 9.8in; }
+  .tesis em { font-style: normal; color: var(--brand); }
+  .tripla { display: flex; flex-direction: column; gap: 6px; margin-top: 26px; font-size: 19px; color: var(--muted); }
+  .tripla b { color: var(--ink); font-weight: 600; }
+  .chica { font-size: 12.5px; color: var(--muted); }
+  /* Láminas de texto: llenan la página */
+  .cmp td { font-size: 14px; padding: 14px 16px; }
+  .cmp th { font-size: 11px; padding-bottom: 6px; }
+  .metricas { flex: 1; grid-auto-rows: 1fr; gap: 16px; }
+  .metrica { padding: 22px 24px; gap: 10px; }
+  .metrica b { font-size: 18px; font-family: var(--serif); }
+  .metrica span { font-size: 14px; }
+  .metrica .como { font-size: 12.5px; }
+  .estados div { padding: 26px 26px; gap: 14px; }
+  .estados h3 { font-size: 30px; }
+  .estados p { font-size: 16px; line-height: 1.5; }
+  .estados ul { font-size: 15px; line-height: 1.8; }
+  .nivel { padding: 24px; }
+  .nivel h3 { font-size: 26px; }
+  .nivel p { font-size: 15px; }
+  .nivel .ej { font-size: 13px; }
+  .tipos-fila { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 22px; }
+  .tipos-fila div { border-top: 3px solid var(--brand-soft); padding-top: 10px; font-size: 13px; color: var(--muted); line-height: 1.45; }
+  .tipos-fila .chip { margin-bottom: 6px; font-size: 11.5px; }
+  table.cmp td { padding: 18px 16px; }
+</style>
+
+<!-- 1 · Portada -->
+<section class="slide cover">
+  <div class="pua-grande"></div>
+  <div class="marca"><span class="pua"></span><span>Laboratorio Copahue · 24/7 AI Ready</span></div>
+  <h1>Sala 24/7<br><em>Caviahue</em></h1>
+  <p class="sub">Una capa operativa que conecta los sistemas de la compañía, los analiza todos los días y prepara las decisiones para que las tome la dirección.</p>
+  <p class="tag">De mirar reportes a operar sobre decisiones.</p>
+  <div class="pills"><span class="pill">5 soluciones con tablero</span><span class="pill">Chat sobre datos</span><span class="pill">Programaciones y aprobaciones</span><span class="pill">Permisos y auditoría</span></div>
+</section>
+
+<!-- 2 · Qué hay y qué no -->
+<section class="slide">
+  <div class="topbar">Punto de partida</div>
+  <div class="eyebrow">Dicho sin vueltas</div>
+  <h2>El sistema existe. Todavía no está enchufado a Caviahue.</h2>
+  <p class="lead">La Sala funciona hoy, publicada y con usuarios, sobre datos simulados que imitan los de Caviahue. Lo que falta es lo más difícil: conectarla a los sistemas reales, con sus datos incompletos, sus códigos distintos y sus cierres contables. Esta propuesta es para hacer eso.</p>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/sala.png" alt="La sala con el CEO y los agentes"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">✓</span><div><b>Ya funciona</b><span>Cinco soluciones con tablero, chat que responde con los números del tablero, tareas, programaciones, aprobaciones, usuarios por rol y registro de auditoría.</span></div></div>
+          <div class="punto"><span class="n">~</span><div><b>Funciona con datos de ejemplo</b><span>Todas las cifras son simuladas, pero coherentes entre sí: el faltante de protector solar es el mismo en Operaciones, Producción, Comercial y Finanzas.</span></div></div>
+          <div class="punto"><span class="n">○</span><div><b>Falta</b><span>La integración con Tango, IQVia, Elvis, Capataz, Disprofarma y el resto; la limpieza de datos que eso destapa; y conectar un modelo de IA para preguntas libres.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>02</span></div>
+</section>
+
+<!-- 3 · Madurez -->
+<section class="slide">
+  <div class="topbar">Punto de partida</div>
+  <div class="eyebrow">Madurez por agente</div>
+  <h2>Cinco de ocho agentes tienen su solución completa</h2>
+  <div class="body">
+    <table class="cmp madurez">
+      <tr><th>Agente</th><th>Estado</th><th>Qué hace hoy</th><th>Qué le falta</th></tr>
+      <tr><td>Comercial</td><td><span class="estado e-ok">Solución completa</span></td><td>Pipeline, cuota, funnel, forecast en cuatro métodos, clientes, territorios y prioridades</td><td>Datos reales de Elvis, Tango e IQVia</td></tr>
+      <tr><td>Finanzas</td><td><span class="estado e-ok">Solución completa</span></td><td>P&amp;L con zoom al comprobante, caja a 13 semanas, análisis por dimensión, sensibilidad</td><td>Vencimientos reales de cobros y pagos; detalle por sociedad y moneda</td></tr>
+      <tr><td>Operaciones</td><td><span class="estado e-ok">Solución completa</span></td><td>Stock real contra ERP, cobertura, vencimientos, quiebres en tiendas online, logística</td><td>Conexión a Disprofarma y Ship Now</td></tr>
+      <tr><td>Producción</td><td><span class="estado e-ok">Solución completa</span></td><td>Plan contra demanda con stock real, órdenes, plantas, qué emitir y qué postergar</td><td>Conexión a Capataz</td></tr>
+      <tr><td>R&amp;D</td><td><span class="estado e-ok">Solución completa</span></td><td>Inversión, portfolio, radar externo, competencia y recomendaciones con fórmula visible</td><td>Una ontología de ingredientes y claims para que el radar sea preciso</td></tr>
+      <tr><td>Marketing, Producto, Riesgo y Legal</td><td><span class="estado e-medio">Respuestas básicas</span></td><td>Alertas y respuestas a preguntas frecuentes, sin tablero propio</td><td>Su solución completa, un vertical por trimestre</td></tr>
+    </table>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>03</span></div>
+</section>
+
+<!-- 4 · Tres niveles -->
+<section class="slide">
+  <div class="topbar">Cómo pensarlo</div>
+  <div class="eyebrow">Dato, análisis y recomendación</div>
+  <h2>La Sala nunca mezcla lo que sabe con lo que opina</h2>
+  <p class="lead">Cada cosa que aparece en pantalla está en uno de estos tres niveles, y el nivel está a la vista. Es la respuesta a la pregunta del CFO: ¿puedo creer este número?</p>
+  <div class="body">
+    <div class="niveles">
+      <div class="nivel n1"><span class="eyebrow">Nivel 1</span><h3>Dato</h3><p>Lo que dice un sistema. Siempre con fuente, fecha y tipo: conciliado (cerrado), operativo (del día) o proyectado (forecast).</p><span class="ej">Ej.: ventas de agosto, 1.240 M, conciliado en Tango.</span></div>
+      <div class="nivel n2"><span class="eyebrow">Nivel 2</span><h3>Análisis</h3><p>Un cálculo sobre datos, con el método explicado. Cuando es una estimación, lo dice y muestra cómo se calculó y con qué confianza.</p><span class="ej">Ej.: venta perdida por quiebres, 51 M, estimada por tiendas sin stock y rotación media.</span></div>
+      <div class="nivel n3"><span class="eyebrow">Nivel 3</span><h3>Recomendación</h3><p>Criterio del agente. Siempre marcada como tal, con su fundamento, y nunca se ejecuta sola: decide una persona.</p><span class="ej">Ej.: emitir 6.000 u de protector solar antes del 25/09. Espera aprobación de Dirección.</span></div>
+    </div>
+    <div class="tipos-fila">
+      <div><span class="chip c-brand">Conciliado</span><br>Cerrado en el ERP y auditado. Enero a agosto.</div>
+      <div><span class="chip c-ok">Operativo</span><br>Del día, todavía sin cerrar. El mes en curso.</div>
+      <div><span class="chip c-prox">Proyectado</span><br>Forecast sobre el presupuesto vigente.</div>
+      <div><span class="chip c-warn">Estimado</span><br>Calculado por el agente, con el método y la confianza a la vista.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>04</span></div>
+</section>
+
+<!-- 5 · Preguntar -->
+<section class="slide">
+  <div class="topbar">Cómo se usa</div>
+  <div class="eyebrow">Preguntar</div>
+  <h2>Se le pregunta al agente y responde con los números del tablero</h2>
+  <p class="lead">Cada respuesta se arma en el momento con los mismos datos que se ven en pantalla, cita el sistema de cada cifra y separa la recomendación del agente. Hoy entiende un conjunto de preguntas por área; conectar un modelo de IA lo abre a preguntas libres sobre los mismos datos.</p>
+  <div class="body">
+    <div class="split">
+      <div class="shot"><img src="caps/chat.png" alt="Conversación con el Agente Comercial"></div>
+      <div class="puntos">
+        <div class="punto"><span class="n">?</span><div><b>«¿Qué negocios cierran este mes y qué falta hacer?»</b><span>Los tres cierres de septiembre, su probabilidad, el vendedor y la acción pendiente.</span></div></div>
+        <div class="punto"><span class="n">?</span><div><b>«¿Qué órdenes conviene emitir esta semana?»</b><span>Faltante, colchón, planta, costo y fecha límite, con el impacto neto en caja.</span></div></div>
+        <div class="punto"><span class="n">?</span><div><b>«¿Qué pasa si el dólar sube 40%?»</b><span>Corre el análisis de sensibilidad y devuelve el impacto en EBITDA y caja.</span></div></div>
+        <div class="punto"><span class="n">🔒</span><div><b>Respeta los permisos</b><span>Si Comercial pregunta por el forecast, ve que hay impacto en caja, pero la cifra solo la ve quien tiene acceso a Finanzas.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>05</span></div>
+</section>
+
+<!-- 6 · Encargar y aprobar -->
+<section class="slide">
+  <div class="topbar">Cómo se usa</div>
+  <div class="eyebrow">Encargar, programar, aprobar</div>
+  <h2>Los agentes preparan el trabajo hasta el punto de decisión</h2>
+  <p class="lead">Reportes, investigaciones y mails se generan solos a la hora que se les fije. Lo que tiene impacto (un mail, una orden de producción, una nota de crédito) queda esperando la aprobación de Dirección, con registro de quién lo aprobó.</p>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/programaciones.png" alt="Programaciones de los agentes"></div>
+      <div class="puntos">
+        <div class="punto"><span class="n">↺</span><div><b>Programaciones</b><span>Se crean con un formulario o escribiéndolas: «Todos los lunes a las 8 armá el reporte de quiebres y mandalo a Dirección».</span></div></div>
+        <div class="punto"><span class="n">✓</span><div><b>Aprobación humana</b><span>Solo Dirección aprueba. Un intento de aprobar desde otro rol se rechaza y queda registrado.</span></div></div>
+        <div class="punto"><span class="n">✉</span><div><b>Bandeja de salida</b><span>Los mails preparados, con su estado. En esta versión no sale ningún correo real.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>06</span></div>
+</section>
+
+<!-- 7 · Comercial -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Solución Comercial</div>
+  <h2>Pipeline, cuota y forecast con la calidad de la venta a la vista</h2>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/comercial.png" alt="Tablero Comercial"></div>
+      <div class="puntos">
+        <div class="punto"><span class="n">▤</span><div><b>Pipeline bruto y ponderado</b><span>Por etapa, vendedor, segmento, canal, región, producto y cliente, con las oportunidades estancadas.</span></div></div>
+        <div class="punto"><span class="n">★</span><div><b>Ranking por calidad</b><span>Margen, cobranza y retención pesan tanto como la facturación, y los descuentos restan.</span></div></div>
+        <div class="punto"><span class="n">◷</span><div><b>Forecast en cuatro métodos</b><span>Declarado, por etapa, histórico y el modelo del agente, con la precisión de cada vendedor. Los métodos están explicados en el anexo técnico.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>07</span></div>
+</section>
+
+<!-- 8 · Integración -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">El diferencial</div>
+  <h2>Una misma decisión, mirada por cinco áreas a la vez</h2>
+  <p class="lead">Operaciones corrige el stock con lo que hay en los depósitos. Producción calcula el faltante con ese stock. Comercial ve el riesgo en sus oportunidades. Finanzas recibe el impacto en caja. R&amp;D sabe qué producto acelerar. Es la misma cadena, no cinco tableros.</p>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/comercial-forecast.png" alt="Forecast comercial y su impacto en Finanzas y Producción"></div>
+      <div class="puntos">
+        <div class="punto"><span class="n">1</span><div><b>Operaciones</b><span>Tango dice 1.400 unidades de protector solar que no están en el depósito.</span></div></div>
+        <div class="punto"><span class="n">2</span><div><b>Producción</b><span>Con el stock real faltan 4.200 unidades para octubre: hay que emitir antes del 25/09.</span></div></div>
+        <div class="punto"><span class="n">3</span><div><b>Comercial</b><span>El producto está en quiebre en 23 de 60 tiendas online, en pleno ciclo promocional.</span></div></div>
+        <div class="punto"><span class="n">4</span><div><b>Finanzas</b><span>Emitir y postergar a la vez tiene un impacto neto en caja de 1 millón.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>08</span></div>
+</section>
+
+<!-- 9 · Operaciones -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Solución Operaciones</div>
+  <h2>Una sola verdad de stock, del depósito a la góndola online</h2>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/operaciones.png" alt="Tablero de Operaciones"></div>
+      <div class="puntos">
+        <div class="punto"><span class="n">▦</span><div><b>Stock real contra el ERP</b><span>Tango, Disprofarma, Ship Now y tránsito, con la diferencia y la cobertura en días de cada producto.</span></div></div>
+        <div class="punto"><span class="n">◉</span><div><b>Quiebres en el canal</b><span>60 tiendas online relevadas todos los días, con la tendencia de la semana.</span></div></div>
+        <div class="punto"><span class="n">◷</span><div><b>Vencimientos y logística</b><span>Lotes por vencer, entregas a tiempo por operador e incidencias.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>09</span></div>
+</section>
+
+<!-- 10 · Producción -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Solución Producción</div>
+  <h2>Qué emitir, qué postergar y hasta cuándo se puede decidir</h2>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/produccion-decidir.png" alt="Qué decidir en Producción"></div>
+      <div class="puntos">
+        <div class="punto"><span class="n">!</span><div><b>Órdenes sugeridas</b><span>Con el faltante, el colchón por la promoción, el costo, la ocupación de la planta y la fecha límite por lead time.</span></div></div>
+        <div class="punto"><span class="n">↓</span><div><b>Lo que sobra</b><span>El lote de Crema Corporal no hace falta: postergarlo libera 23 millones.</span></div></div>
+        <div class="punto"><span class="n">≋</span><div><b>Simular antes de aprobar</b><span>Aprobar y postergar a la vez deja los seis productos cubiertos. La orden la aprueba Dirección.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>10</span></div>
+</section>
+
+<!-- 11 · Finanzas -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Solución Finanzas</div>
+  <h2>P&amp;L operativo separado del contable, con zoom hasta la factura</h2>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/finanzas.png" alt="Tablero de Finanzas"></div>
+      <div class="puntos">
+        <div class="punto"><span class="n">≡</span><div><b>Conciliado no se mezcla con operativo</b><span>Enero a agosto, cerrado; septiembre, del día; octubre a diciembre, proyectado. Cada columna lo dice.</span></div></div>
+        <div class="punto"><span class="n">⌕</span><div><b>Zoom al comprobante</b><span>De la línea del P&amp;L al centro de costo, y de ahí a la factura con su proveedor.</span></div></div>
+        <div class="punto"><span class="n">◷</span><div><b>Caja y sensibilidad</b><span>Flujo a 13 semanas y análisis de sensibilidad sobre nueve variables. Es sensibilidad, no un modelo financiero integral: lo que falta para serlo está en el anexo.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>11</span></div>
+</section>
+
+<!-- 12 · R&D -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Solución R&amp;D</div>
+  <h2>El agente recomienda y fundamenta. Decide el ejecutivo.</h2>
+  <p class="lead">El ranking de proyectos no es una caja negra: la fórmula está a la vista, con sus pesos, para que Dirección la discuta y la calibre. El radar externo cruza papers, patentes, ANMAT y competidores con los proyectos propios.</p>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/rd-decision.png" alt="Recomendaciones de R&D con la fórmula visible"></div>
+      <div class="puntos">
+        <div class="punto"><span class="n">⚖</span><div><b>Recomendaciones con fundamento</b><span>Acelerar, mantener, pausar, asociarse o cancelar, cada una con su motivo.</span></div></div>
+        <div class="punto"><span class="n">∑</span><div><b>Fórmula visible</b><span>Valor esperado, probabilidad, tiempo al mercado, demora y riesgo. Los pesos son un punto de partida, no una verdad.</span></div></div>
+        <div class="punto"><span class="n">!</span><div><b>El desafío real</b><span>Que el radar acierte qué documento afecta qué proyecto requiere una ontología de ingredientes, claims y patentes. Es trabajo de la integración.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>12</span></div>
+</section>
+
+<!-- 13 · Seguridad -->
+<section class="slide">
+  <div class="topbar">Cómo está hecho</div>
+  <div class="eyebrow">Seguridad y gobierno</div>
+  <h2>Permisos y auditoría no son la fase dos: ya están andando</h2>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/auditoria.png" alt="Registro de auditoría"></div>
+      <div class="puntos">
+        <div class="punto"><span class="n">👤</span><div><b>Usuarios por rol</b><span>Dirección, Finanzas, Comercial, Operaciones, R&amp;D y solo lectura. Contraseñas cifradas, fuera del código.</span></div></div>
+        <div class="punto"><span class="n">🔒</span><div><b>Confidencialidad</b><span>La caja, el P&amp;L y el portfolio de I+D solo los ven los roles que los necesitan para decidir.</span></div></div>
+        <div class="punto"><span class="n">≡</span><div><b>Registro completo</b><span>Quién consultó, preguntó, encargó, programó, aprobó o rechazó qué y cuándo, incluidos los intentos rechazados.</span></div></div>
+        <div class="punto"><span class="n">$</span><div><b>Presupuesto de consumo</b><span>Cuando se conecte la IA, cada agente arranca con un techo mensual y costo por consulta medido desde el primer día.</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>13</span></div>
+</section>
+
+<!-- 14 · Por qué no Power BI -->
+<section class="slide">
+  <div class="topbar">La objeción obvia</div>
+  <div class="eyebrow">¿Por qué no Power BI más Copilot?</div>
+  <h2>Un tablero muestra lo que pasó. La Sala prepara lo que hay que decidir.</h2>
+  <div class="body">
+    <table class="cmp">
+      <tr><th>Capacidad</th><th>Tablero más asistente</th><th>Sala 24/7</th></tr>
+      <tr><td>Cruce entre áreas</td><td class="no">Cada tablero por separado; el cruce lo hace una persona</td><td>El forecast comercial entra solo a la caja y al plan de producción</td></tr>
+      <tr><td>Trabajo delegado</td><td class="no">Se consulta cuando alguien entra a mirar</td><td>Agentes con programaciones que trabajan a la hora fijada y avisan</td></tr>
+      <tr><td>Del análisis a la acción</td><td class="no">Termina en un gráfico</td><td>Termina en una orden, un mail o una tarea lista para aprobar</td></tr>
+      <tr><td>Aprobación y registro</td><td class="no">Fuera del sistema</td><td>Quién aprobó qué y cuándo, dentro del mismo flujo</td></tr>
+      <tr><td>Honestidad del dato</td><td class="no">Todos los números se ven igual</td><td>Dato, análisis y recomendación separados, con su tipo y su fuente</td></tr>
+      <tr><td>Conocimiento propio</td><td class="no">Licencia de un tercero</td><td>Agentes, reglas y datos quedan en Caviahue</td></tr>
+    </table>
+    <p class="chica" style="margin-top:10px">Power BI puede seguir siendo la herramienta de reportes: la Sala se puede alimentar de los mismos datos.</p>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>14</span></div>
+</section>
+
+<!-- 15 · Qué gano -->
+<section class="slide">
+  <div class="topbar">Qué se gana</div>
+  <div class="eyebrow">Cómo proponemos medirlo</div>
+  <h2>Seis métricas para los primeros 90 días, contra una línea de base medida</h2>
+  <p class="lead">No prometemos porcentajes antes de medir. En las dos primeras semanas se toma la línea de base de cada métrica con el equipo de Caviahue, y el proyecto se evalúa contra eso.</p>
+  <div class="body">
+    <div class="metricas">
+      <div class="metrica"><b>Horas para preparar información de Dirección</b><span>Cuánto tiempo lleva hoy armar el reporte semanal, el cierre y la reunión de directorio.</span><span class="como">Se mide con registro de tiempos del equipo</span></div>
+      <div class="metrica"><b>Tiempo entre detectar y decidir</b><span>Días desde que aparece un problema (un quiebre, un desvío) hasta que alguien decide qué hacer.</span><span class="como">Se mide con la fecha de alerta y la de aprobación</span></div>
+      <div class="metrica"><b>Quiebres de stock</b><span>Tiendas sin producto y ventas perdidas por falta de stock.</span><span class="como">Se mide con el relevamiento diario de tiendas</span></div>
+      <div class="metrica"><b>Precisión del forecast</b><span>Diferencia entre lo proyectado y lo vendido, por vendedor y en total.</span><span class="como">Se mide trimestre contra trimestre</span></div>
+      <div class="metrica"><b>Capital inmovilizado</b><span>Stock por encima de la cobertura objetivo y lotes que se producen sin necesidad.</span><span class="como">Se mide con el inventario valorizado</span></div>
+      <div class="metrica"><b>Horas de análisis manual</b><span>Tiempo dedicado a bajar, cruzar y conciliar planillas entre sistemas.</span><span class="como">Se mide con el mismo registro de tiempos</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>15</span></div>
+</section>
+
+<!-- 16 · Hoja de ruta -->
+<section class="slide">
+  <div class="topbar">Qué sigue</div>
+  <div class="eyebrow">Hoja de ruta</div>
+  <h2>Tres estados fáciles de recordar</h2>
+  <div class="body">
+    <div class="estados">
+      <div>
+        <span class="cuando">Hoy</span>
+        <h3>Funciona con datos simulados</h3>
+        <p>La Sala completa, publicada, con usuarios, permisos y auditoría.</p>
+        <ul><li>Cinco soluciones con tablero</li><li>Chat sobre los datos del tablero</li><li>Programaciones y aprobaciones</li></ul>
+      </div>
+      <div>
+        <span class="cuando">En seis semanas</span>
+        <h3>Funciona sobre Caviahue real</h3>
+        <p>Conectada a los sistemas que más pesan, con los datos limpios y la línea de base medida.</p>
+        <ul><li>Tango, Disprofarma, Capataz, Elvis, IQVia</li><li>Diccionario común de productos, clientes y zonas</li><li>IA conectada para preguntas libres, con presupuesto de consumo</li></ul>
+      </div>
+      <div>
+        <span class="cuando">Después</span>
+        <h3>Crece lo que se puede delegar</h3>
+        <p>Un vertical por trimestre y más trabajo en manos de los agentes, siempre con aprobación humana.</p>
+        <ul><li>Marketing, Producto, Riesgo y Legal</li><li>Envío real de mails y órdenes aprobadas</li><li>Mapas por provincia y localidad</li></ul>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>16</span></div>
+</section>
+
+<!-- 17 · Cierre -->
+<section class="slide cover">
+  <div class="pua-grande" style="right:0.9in;bottom:0.7in;opacity:0.12"></div>
+  <div class="marca"><span class="pua"></span><span>Laboratorio Copahue · 24/7 AI Ready</span></div>
+  <p class="tesis">La compañía pasa de <em>mirar reportes</em> a <em>operar sobre decisiones</em>.</p>
+  <div class="tripla">
+    <span><b>Más capacidad</b> con la misma gente.</span>
+    <span><b>Más decisiones</b> con los mismos datos.</span>
+    <span><b>Menos tiempo</b> entre detectar y actuar.</span>
+  </div>
+  <p class="lead" style="margin-top:26px">No es un sistema para construir: es un sistema para conectar. <span class="mono">copahue.moshito.work</span> · El anexo técnico acompaña esta propuesta.</p>
+</section>
+
+</body>
+</html>

@@ -7,9 +7,10 @@ import TaskForm from "./TaskForm.jsx";
 import { TaskStatus, AgentTag } from "./Status.jsx";
 
 export default function AgentPanel({ agentId, agents }) {
-  const agent = agents.find((a) => a.id === agentId) || agents.find((a) => a.id === "ceo");
-  const isCeo = agent.id === "ceo";
   const [tab, setTab] = useState("chat");
+  const agent = agents.find((a) => a.id === agentId) || agents.find((a) => a.id === "ceo") || agents[0];
+  if (!agent) return <section className="panel"><p className="empty" style={{ padding: 18 }}>Tu rol no tiene agentes asignados.</p></section>;
+  const isCeo = agent.id === "ceo";
 
   const tabs = [
     ["chat", "Conversar"],

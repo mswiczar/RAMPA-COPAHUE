@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api.js";
 import { TYPES } from "../format.js";
 import CronField from "./CronField.jsx";
+import { useSesion } from "../live.jsx";
 
 const HINTS = {
   reporte: "Ej.: Reporte de sell-out por zona con foco en AMBA.",
@@ -12,8 +13,9 @@ const HINTS = {
 
 /** Encargar una tarea ahora o dejarla programada. También se usa para editar programaciones. */
 export default function TaskForm({ agents, agentId, initial, mode = "task", onDone, onCancel }) {
+  const { permisos } = useSesion();
   const [form, setForm] = useState(() => ({
-    agentId: initial?.agentId || agentId || "comercial",
+    agentId: initial?.agentId || agentId || agents.find((a) => a.id !== "ceo")?.id || agents[0]?.id,
     type: initial?.type || "reporte",
     name: initial?.name || "",
     instruction: initial?.instruction || "",
@@ -100,7 +102,7 @@ export default function TaskForm({ agents, agentId, initial, mode = "task", onDo
         <fieldset className="field">
           <legend>Cuándo</legend>
           <div className="segmented">
-            {[["ahora", "Ahora"], ["programar", "Programar (cron)"]].map(([id, label]) => (
+            {[["ahora", "Ahora"], ...(permisos.programar ? [["programar", "Programar (cron)"]] : [])].map(([id, label]) => (
               <label key={id} className={form.when === id ? "on" : ""}>
                 <input type="radio" name="tf-when" value={id} checked={form.when === id} onChange={set("when")} />
                 {label}
@@ -115,10 +117,10 @@ export default function TaskForm({ agents, agentId, initial, mode = "task", onDo
       {(form.type === "email" || form.recipients.trim()) && showRecipients && (
         <label className="check">
           <input type="checkbox" checked={form.requiresApproval} onChange={set("requiresApproval")} />
-          Pedirme aprobación antes de enviar el mail
+          Pedir aprobación de Dirección antes de enviar el mail
         </label>
       )}
-      {form.type === "accion" && <p className="hint">Las acciones siempre esperan tu aprobación.</p>}
+      {form.type === "accion" && <p className="hint">Las acciones siempre esperan la aprobación de Dirección.</p>}
 
       {error && <p className="form-error" role="alert">{error}</p>}
       {done && !error && <p className="form-ok" role="status">{done}</p>}

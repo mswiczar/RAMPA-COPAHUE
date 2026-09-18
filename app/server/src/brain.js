@@ -29,7 +29,7 @@ function bestAnswers(agent, text, n = 1) {
 
 const COMMAND = /^(?:(?:por favor|che|necesito que|quiero que|podes|podrias)\s+)*(arma|armame|armen|prepara|preparame|genera|generame|envia|enviale|enviame|manda|mandale|mandame|investiga|analiza|hace|haceme|redacta|programa|programame|crea|pedile|decile|avisale|avisa|emiti|emitir|posterga|postergar|releva|busca|compara|calcula|actualiza|revisa|revisame|agenda|agendame|recordame|todos|todas|cada)\b/;
 
-export function chat(agent, text) {
+export function chat(agent, text, ctx = {}) {
   const t = norm(text).trim();
   const schedule = parseSchedule(t);
   if (COMMAND.test(t) || schedule) {
@@ -38,12 +38,12 @@ export function chat(agent, text) {
     const recipients = extractRecipients(text, type);
     return { intent: { kind: schedule ? "schedule" : "task", agentId, type, instruction: text.trim(), recipients, schedule } };
   }
-  return { text: answer(agent, text) };
+  return { text: answer(agent, text, ctx) };
 }
 
-export function answer(agent, text) {
-  // Primero, la solución del agente: datos vivos del tablero.
-  const delTablero = consultas.responder(agent.id, text);
+export function answer(agent, text, ctx = {}) {
+  // Primero, la solución del agente: datos vivos del tablero, filtrados por los permisos de quien pregunta.
+  const delTablero = consultas.responder(agent.id, text, ctx);
   if (delTablero) return delTablero;
   const [best] = bestAnswers(agent, text);
   if (best && best.s >= 2) {

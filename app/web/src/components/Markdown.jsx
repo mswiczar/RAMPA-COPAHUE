@@ -13,7 +13,8 @@ md.use({
 export function toHtml(text) {
   return md.parse(String(text || ""))
     .replace(/\[([^\[\]<>\n]{2,40})\]/g, '<span class="src">$1</span>')
-    .replace(/<p>Recomendación:/g, '<p class="rec">Recomendación:');
+    // La recomendación es criterio del agente, no un dato: se marca así en toda la Sala.
+    .replace(/<p>Recomendación:\s*/g, '<p class="rec"><span class="rec-tag">Recomendación del agente · decide una persona</span>');
 }
 
 export default function Markdown({ text, className = "" }) {

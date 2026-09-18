@@ -340,14 +340,20 @@ function Forecast({ f, desempeno }) {
           <div className="grid-2">
             <div className="cross">
               <h3 className="sub">Finanzas</h3>
-              <ul className="mini-list">
-                <li><span className="mini-title">Ingresos del año</span><span className="num">{fmtM(integ.finanzas.ingresosEscenario)} vs {fmtM(integ.finanzas.ingresosBase)} base</span></li>
-                <li><span className="mini-title">EBITDA</span><span className="num">{fmtM(integ.finanzas.ebitdaEscenario)} vs {fmtM(integ.finanzas.ebitdaBase)} base</span></li>
-                <li><span className="mini-title">Caja al cierre de 13 semanas</span><span className="num">{fmtM(integ.finanzas.cajaFinal)} ARS M</span></li>
-                <li><span className="mini-title">Mínimo operativo</span><span className={`num ${integ.finanzas.cajaQuiebre ? "down" : "up"}`}>{integ.finanzas.cajaQuiebre ? `Se perfora en ${integ.finanzas.cajaQuiebre}` : "No se perfora"}</span></li>
-              </ul>
-              <p className="muted small">{integ.finanzas.nota}</p>
-              <a className="btn small ghost" href="#/finanzas">Abrir la solución Finanzas</a>
+              {integ.finanzas.restringido ? (
+                <p className="restringido">🔒 {integ.finanzas.nota}. El agente calcula el impacto igual, pero solo lo muestra a quien tiene acceso.</p>
+              ) : (
+                <>
+                  <ul className="mini-list">
+                    <li><span className="mini-title">Ingresos del año</span><span className="num">{fmtM(integ.finanzas.ingresosEscenario)} vs {fmtM(integ.finanzas.ingresosBase)} base</span></li>
+                    <li><span className="mini-title">EBITDA</span><span className="num">{fmtM(integ.finanzas.ebitdaEscenario)} vs {fmtM(integ.finanzas.ebitdaBase)} base</span></li>
+                    <li><span className="mini-title">Caja al cierre de 13 semanas</span><span className="num">{fmtM(integ.finanzas.cajaFinal)} ARS M</span></li>
+                    <li><span className="mini-title">Mínimo operativo</span><span className={`num ${integ.finanzas.cajaQuiebre ? "down" : "up"}`}>{integ.finanzas.cajaQuiebre ? `Se perfora en ${integ.finanzas.cajaQuiebre}` : "No se perfora"}</span></li>
+                  </ul>
+                  <p className="muted small">{integ.finanzas.nota}</p>
+                  <a className="btn small ghost" href="#/finanzas">Abrir la solución Finanzas</a>
+                </>
+              )}
             </div>
             <div className="cross">
               <h3 className="sub">Producción y Producto</h3>

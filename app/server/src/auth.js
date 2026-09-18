@@ -1,14 +1,15 @@
 // Login con página propia: sesión firmada (HMAC) en una cookie HttpOnly.
+// La sesión lleva el usuario; el rol y los permisos se resuelven en cada pedido.
 import crypto from "node:crypto";
+import * as users from "./users.js";
+import * as audit from "./audit.js";
 
 const COOKIE = "sala_session";
 const TTL_MS = 12 * 3600e3;
-const USER = process.env.APP_USER || "ceo";
-const PASSWORD = process.env.APP_PASSWORD || "";
 const SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 const SECURE = process.env.NODE_ENV === "production";
 
-export const authEnabled = Boolean(PASSWORD);
+export const authEnabled = users.hayUsuarios;
 
 const b64 = (s) => Buffer.from(s).toString("base64url");
 const sign = (data) => crypto.createHmac("sha256", SECRET).update(data).digest("base64url");
@@ -22,14 +23,14 @@ function readCookie(req) {
 }
 
 export function sessionUser(req) {
-  if (!authEnabled) return USER;
+  if (!authEnabled) return users.LOCAL;
   const token = readCookie(req);
   if (!token) return null;
   const [payload, sig] = token.split(".");
   if (!payload || !sig || !same(sign(payload), sig)) return null;
   try {
     const { u, exp } = JSON.parse(Buffer.from(payload, "base64url").toString());
-    return exp > Date.now() ? u : null;
+    return exp > Date.now() ? users.buscar(u) : null;
   } catch {
     return null;
   }
@@ -61,32 +62,41 @@ export function routes(app) {
   app.get("/api/auth/me", (req, res) => {
     const user = sessionUser(req);
     if (!user) return res.status(401).json({ error: "Sesión no iniciada" });
-    res.json({ user, authEnabled });
+    res.json({ user, permisos: users.permisos(user), authEnabled });
   });
 
   app.post("/api/auth/login", (req, res) => {
     const ip = req.ip;
     if (tooMany(ip)) return res.status(429).json({ error: "Demasiados intentos. Esperá 15 minutos y probá de nuevo." });
     const { user = "", password = "" } = req.body || {};
-    if (!authEnabled || (same(String(user).trim().toLowerCase(), USER.toLowerCase()) & same(password, PASSWORD))) {
+    const found = authEnabled ? users.verificar(user, password) : users.LOCAL;
+    if (found) {
       failures.delete(ip);
-      const payload = b64(JSON.stringify({ u: USER, exp: Date.now() + TTL_MS }));
+      const payload = b64(JSON.stringify({ u: found.usuario, exp: Date.now() + TTL_MS }));
       setCookie(res, `${payload}.${sign(payload)}`, TTL_MS);
-      return res.json({ user: USER });
+      req.user = found;
+      audit.registrar(req, "inició sesión", "Sala 24/7");
+      return res.json({ user: found, permisos: users.permisos(found) });
     }
     fail(ip);
+    req.user = { usuario: String(user).slice(0, 40) || "vacío", rolLabel: "—" };
+    audit.registrar(req, "intentó iniciar sesión", "Sala 24/7", "Usuario o contraseña incorrectos", "rechazado");
     res.status(401).json({ error: "Usuario o contraseña incorrectos" });
   });
 
   app.post("/api/auth/logout", (req, res) => {
+    req.user = sessionUser(req);
+    if (req.user) audit.registrar(req, "cerró sesión", "Sala 24/7");
     setCookie(res, "", 0);
     res.json({ ok: true });
   });
 }
 
-/** Protege la API. El frontend (HTML/JS) es público y muestra el login. */
+/** Protege la API y deja el usuario en req.user. El frontend es público y muestra el login. */
 export function requireSession(req, res, next) {
   if (!req.path.startsWith("/api/") || req.path.startsWith("/api/auth/") || req.path === "/api/health") return next();
-  if (sessionUser(req)) return next();
-  res.status(401).json({ error: "Sesión no iniciada" });
+  const user = sessionUser(req);
+  if (!user) return res.status(401).json({ error: "Sesión no iniciada" });
+  req.user = user;
+  next();
 }
