@@ -8,6 +8,7 @@ import { ALL, byId } from "./agents.js";
 import * as brain from "./brain.js";
 import { createTask, decide, resume } from "./worker.js";
 import * as scheduler from "./scheduler.js";
+import * as finanzas from "./solutions/finanzas.js";
 import { seed } from "./seed.js";
 
 const PORT = Number(process.env.PORT || 8080);
@@ -122,6 +123,36 @@ app.patch("/api/schedules/:id", wrap((req) => scheduler.update(req.params.id, re
 app.delete("/api/schedules/:id", wrap((req) => { scheduler.remove(req.params.id); return { ok: true }; }));
 app.post("/api/schedules/:id/run", wrap((req) => scheduler.fire(req.params.id, true)));
 app.get("/api/cron/preview", wrap((req) => ({ next: scheduler.nextRun(String(req.query.expr || "")) })));
+
+/* ---------- Soluciones (tableros por agente) ---------- */
+
+app.get("/api/solutions", wrap(() => [{ id: finanzas.META.id, agentId: finanzas.META.agentId, titulo: finanzas.META.titulo, bajada: finanzas.META.bajada }]));
+
+app.get("/api/solutions/finanzas", wrap(() => ({
+  meta: finanzas.META,
+  indicadores: finanzas.indicadores(),
+  caja: finanzas.caja(),
+  puente: finanzas.puente(),
+  pnl: finanzas.pnl()
+})));
+
+app.get("/api/solutions/finanzas/dimensiones", wrap((req) => finanzas.dimensiones(Math.min(12, Math.max(1, Number(req.query.meses ?? 8))))));
+app.get("/api/solutions/finanzas/linea/:id", wrap((req) => {
+  const detalle = finanzas.detalleLinea(req.params.id);
+  if (!detalle) throw new HttpError(404, "Esa línea no tiene apertura por centro de costo");
+  return detalle;
+}));
+app.post("/api/solutions/finanzas/escenario", wrap((req) => {
+  const deltas = {};
+  for (const v of finanzas.VARIABLES_ESCENARIO) {
+    const raw = req.body?.[v.id];
+    if (raw === undefined || raw === null || raw === "") continue;
+    const n = Number(raw);
+    if (Number.isNaN(n)) throw new HttpError(400, `Valor inválido para ${v.label}`);
+    deltas[v.id] = Math.min(v.max, Math.max(v.min, n));
+  }
+  return finanzas.escenario(deltas);
+}));
 
 /* ---------- Entregables y bandeja de salida ---------- */
 

@@ -26,7 +26,10 @@ export default function AgentPanel({ agentId, agents }) {
           <h2>{isCeo ? "CEO · Centro de decisión" : agent.name}</h2>
           <p>{agent.tagline}</p>
         </div>
-        <div className="sys">{agent.systems.map((s) => <span key={s}>{s}</span>)}</div>
+        <div className="sys">
+          {agent.systems.map((s) => <span key={s}>{s}</span>)}
+          {agent.id === "finanzas" && <a className="btn small" href="#/finanzas">Abrir tablero →</a>}
+        </div>
       </header>
       <div className="tabs" role="tablist">
         {tabs.map(([id, label]) => (
