@@ -7,6 +7,8 @@ const LiveContext = createContext(0);
 export function LiveProvider({ children }) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
+    // ?estatico=1 apaga el tiempo real: sirve para capturas y para exportar pantallas.
+    if (new URLSearchParams(window.location.search).has("estatico")) return;
     let timer;
     const es = new EventSource("/api/events");
     es.onmessage = () => {

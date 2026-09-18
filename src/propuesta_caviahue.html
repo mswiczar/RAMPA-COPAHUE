@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Caviahue · Sala 24/7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  @page { size: 13.333in 7.5in; margin: 0; }
+  :root {
+    --brand: #00a5dc; --brand-dark: #0b7cab; --brand-ink: #063d54;
+    --brand-soft: #e3f4fc; --brand-softer: #f4fbfe;
+    --ink: #0f2e3c; --muted: #5d7d8c; --faint: #93adb9;
+    --line: #cfe4ef; --line-soft: #e4f0f7;
+    --ok: #0f9d74; --warn: #dd8408; --crit: #d1453b;
+    --serif: "Source Serif 4", Georgia, serif;
+    --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+    --pua: polygon(50% 0%, 78% 4%, 95% 22%, 97% 42%, 84% 72%, 62% 95%, 50% 100%, 38% 95%, 16% 72%, 3% 42%, 5% 22%, 22% 4%);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--sans); color: var(--ink); background: #888; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .slide { width: 13.333in; height: 7.5in; position: relative; overflow: hidden; background: #fff; padding: 0.5in 0.65in 0.45in; page-break-after: always; break-after: page; display: flex; flex-direction: column; }
+  .slide:last-child { page-break-after: auto; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 700; letter-spacing: -0.015em; }
+  h2 { font-size: 30px; line-height: 1.12; }
+  h3 { font-size: 17px; line-height: 1.2; }
+  .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.17em; text-transform: uppercase; color: var(--brand-dark); margin-bottom: 7px; }
+  .lead { font-size: 14px; line-height: 1.5; color: var(--muted); margin-top: 8px; max-width: 8.6in; }
+  .foot { position: absolute; bottom: 0.24in; left: 0.65in; right: 0.65in; display: flex; justify-content: space-between; font-size: 9px; color: var(--faint); letter-spacing: 0.06em; }
+  .pua { width: 26px; height: 29px; background: var(--brand); clip-path: var(--pua); flex: none; }
+  .topbar { position: absolute; top: 0.32in; right: 0.65in; font-size: 9px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); font-weight: 600; }
+
+  /* Portada */
+  .cover { padding: 0.9in 0.95in; justify-content: center; background:
+      radial-gradient(ellipse 55% 60% at 88% 18%, var(--brand-soft), transparent 70%),
+      radial-gradient(ellipse 40% 50% at 12% 95%, #eaf7fd, transparent 70%), #fff; }
+  .cover .marca { display: flex; align-items: center; gap: 12px; margin-bottom: 26px; }
+  .cover .marca span { font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--brand-dark); font-weight: 700; }
+  .cover h1 { font-size: 70px; line-height: 1.02; letter-spacing: -0.025em; }
+  .cover h1 em { font-style: normal; color: var(--brand); }
+  .cover .sub { font-size: 19px; line-height: 1.45; color: var(--muted); max-width: 7in; margin-top: 20px; }
+  .cover .tag { margin-top: 28px; font-family: var(--serif); font-size: 21px; color: var(--brand-dark); }
+  .pills { display: flex; gap: 8px; margin-top: 30px; flex-wrap: wrap; }
+  .pill { border: 1px solid var(--line); border-radius: 999px; padding: 7px 15px; font-size: 12px; color: var(--brand-dark); background: #fff; }
+  .cover .pua-grande { position: absolute; right: 1.1in; bottom: 0.9in; width: 2.6in; height: 2.9in; background: linear-gradient(160deg, var(--brand), #56c8ea); clip-path: var(--pua); opacity: 0.14; }
+
+  /* Bloques */
+  .body { flex: 1; display: flex; flex-direction: column; margin-top: 18px; min-height: 0; }
+  .shot { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 10px 28px rgba(15, 46, 60, 0.1); }
+  .shot img { width: 100%; display: block; }
+  .split { display: grid; grid-template-columns: 1.02fr 1fr; gap: 26px; flex: 1; min-height: 0; align-items: start; }
+  .split.ancho { grid-template-columns: 1.35fr 1fr; }
+  .split .shot { max-height: 5.4in; }
+  .puntos { display: flex; flex-direction: column; gap: 13px; }
+  .punto { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: start; }
+  .punto .n { width: 26px; height: 29px; background: var(--brand); clip-path: var(--pua); display: grid; place-items: center; color: #fff; font-size: 12px; font-weight: 700; }
+  .punto b { font-size: 14.5px; display: block; margin-bottom: 2px; }
+  .punto span { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+  .dato { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 14px; }
+  .dato div { border-top: 3px solid var(--brand-soft); padding-top: 8px; min-width: 1.5in; }
+  .dato b { display: block; font-family: var(--serif); font-size: 26px; line-height: 1.1; }
+  .dato span { font-size: 11.5px; color: var(--muted); }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; flex: 1; }
+  .card { background: var(--brand-softer); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 7px; }
+  .card h3 { color: var(--brand-ink); }
+  .card p { font-size: 12.5px; line-height: 1.45; color: var(--muted); }
+  .card ul { margin: 0 0 0 16px; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .card .pie { margin-top: auto; font-size: 11.5px; color: var(--brand-dark); font-weight: 600; }
+
+  .fila { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .fila div { border-left: 3px solid var(--brand); padding-left: 11px; }
+  .fila b { display: block; font-size: 13px; }
+  .fila span { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+
+  table { width: 100%; border-collapse: separate; border-spacing: 0 6px; margin-top: 8px; }
+  th { text-align: left; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); padding: 0 12px 2px; }
+  td { font-size: 12.5px; line-height: 1.4; padding: 10px 12px; vertical-align: middle; background: var(--brand-softer); }
+  td:first-child { border-radius: 8px 0 0 8px; font-weight: 600; width: 22%; }
+  td:last-child { border-radius: 0 8px 8px 0; color: var(--muted); }
+  .mono { font-family: var(--mono); font-size: 11.5px; }
+  .chip { display: inline-block; font-size: 10.5px; font-weight: 600; border-radius: 5px; padding: 1px 7px; }
+  .c-ok { background: #e6f6f1; color: #0b6b53; }
+  .c-brand { background: var(--brand-soft); color: var(--brand-ink); }
+  .c-warn { background: #fdf0e6; color: #8c3f12; }
+  .c-prox { background: #f0ecfb; color: #4e3a86; }
+</style>
+</head>
+<body>
+
+<!-- 1 · Portada -->
+<section class="slide cover">
+  <div class="pua-grande"></div>
+  <div class="marca"><span class="pua"></span><span>Laboratorio Copahue · 24/7 AI Ready</span></div>
+  <h1>Sala 24/7<br><em>Caviahue</em></h1>
+  <p class="sub">La sala de decisión de la compañía: el CEO en el centro y ocho agentes verticales que miran el negocio todo el día, responden preguntas con datos y trabajan solos cuando toca.</p>
+  <p class="tag">Ya está funcionando. Esto es lo que hay hoy.</p>
+  <div class="pills"><span class="pill">Solución Comercial</span><span class="pill">Solución Finanzas</span><span class="pill">Solución R&amp;D</span><span class="pill">Programaciones y aprobaciones</span></div>
+</section>
+
+<!-- 2 · Qué hay hoy -->
+<section class="slide">
+  <div class="topbar">Estado actual</div>
+  <div class="eyebrow">De la propuesta al sistema</div>
+  <h2>Lo que antes era una lámina, hoy se abre en el navegador</h2>
+  <p class="lead">La sala está publicada, con acceso por usuario y contraseña. Todos los datos de negocio son simulados: cuando se conecten los sistemas de Copahue, se reemplaza la fuente y las pantallas quedan igual.</p>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/sala.png" alt="Pantalla de la sala con el CEO y los ocho agentes"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">1</span><div><b>La sala</b><span>El CEO al centro y ocho agentes alrededor. Cada uno muestra sus alertas y si está trabajando o esperando una aprobación.</span></div></div>
+          <div class="punto"><span class="n">2</span><div><b>Tres soluciones completas</b><span>Comercial, Finanzas y R&amp;D, cada una con su tablero, su análisis y su motor de decisión.</span></div></div>
+          <div class="punto"><span class="n">3</span><div><b>Preguntar y encargar</b><span>Se le pregunta a cada agente en lenguaje natural, o se le encarga un reporte, un mail o una acción.</span></div></div>
+          <div class="punto"><span class="n">4</span><div><b>Trabajo automático</b><span>Programaciones tipo crontab que corren solas y dejan todo listo para que el CEO apruebe.</span></div></div>
+        </div>
+        <div class="dato">
+          <div><b>3</b><span>soluciones con tablero</span></div>
+          <div><b>8</b><span>agentes verticales</span></div>
+          <div><b>8</b><span>programaciones activas</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>copahue.moshito.work</span></div>
+</section>
+
+<!-- 3 · Preguntar -->
+<section class="slide">
+  <div class="topbar">Cómo se usa</div>
+  <div class="eyebrow">Preguntar</div>
+  <h2>Se le pregunta al agente y responde con el dato, no con una opinión</h2>
+  <p class="lead">Cada respuesta se arma en el momento con los números del tablero y cita el sistema del que sale cada cifra. Si el dato no está, lo dice y sugiere qué habría que conectar.</p>
+  <div class="body">
+    <div class="split">
+      <div class="shot"><img src="caps/chat.png" alt="Conversación con el Agente Finanzas"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">?</span><div><b>«¿Qué negocios cierran este mes y qué falta hacer?»</b><span>Devuelve los tres cierres de septiembre, su probabilidad, el vendedor y la acción pendiente de cada uno.</span></div></div>
+          <div class="punto"><span class="n">?</span><div><b>«¿Cómo está la caja en las próximas semanas?»</b><span>Saldo de hoy, piso del trimestre, semana más exigente y si perfora el mínimo operativo.</span></div></div>
+          <div class="punto"><span class="n">?</span><div><b>«¿Qué pasa si el dólar sube 40%?»</b><span>Corre el escenario y devuelve el impacto en EBITDA, resultado neto y caja.</span></div></div>
+          <div class="punto"><span class="n">?</span><div><b>«¿En qué proyectos invertimos 300 millones más?»</b><span>Arma la asignación por retorno esperado y descarta lo que conviene pausar.</span></div></div>
+        </div>
+        <p class="lead" style="margin-top:16px">El CEO además puede derivar: «Pedile a Finanzas un reporte de cobranzas y mandalo a Dirección» le crea la tarea al agente que corresponde.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>03</span></div>
+</section>
+
+<!-- 4 · Encargar y programar -->
+<section class="slide">
+  <div class="topbar">Cómo se usa</div>
+  <div class="eyebrow">Encargar y programar</div>
+  <h2>El trabajo repetitivo lo hacen los agentes, a la hora que se les fije</h2>
+  <p class="lead">Reportes, investigaciones y mails que se ejecutan solos, en hora de Buenos Aires. Nada sale sin aprobación: los mails y las acciones quedan esperando el visto bueno del CEO.</p>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/programaciones.png" alt="Pantalla de programaciones tipo crontab"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">↺</span><div><b>Programaciones</b><span>Se crean desde el formulario o escribiéndolas: «Todos los lunes a las 8 armá el reporte de quiebres y mandalo a Dirección».</span></div></div>
+          <div class="punto"><span class="n">✓</span><div><b>Aprobaciones</b><span>El CEO ve en un solo lugar todo lo que espera su decisión, con el detalle y el destinatario.</span></div></div>
+          <div class="punto"><span class="n">✉</span><div><b>Bandeja de salida</b><span>Los mails preparados por los agentes, con su estado. En esta versión no se envía ningún correo real.</span></div></div>
+          <div class="punto"><span class="n">▤</span><div><b>Entregables</b><span>Cada reporte e investigación queda guardado, con sus fuentes y su fecha.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>04</span></div>
+</section>
+
+<!-- 5 · Comercial -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Solución Comercial</div>
+  <h2>Pipeline, cuota, funnel y forecast, con el mercado al lado</h2>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/comercial.png" alt="Tablero de la solución Comercial"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">▤</span><div><b>Pipeline</b><span>Bruto y ponderado por probabilidad, abierto por etapa, vendedor, segmento, canal, región, producto y cliente.</span></div></div>
+          <div class="punto"><span class="n">★</span><div><b>Ranking por calidad de venta</b><span>No solo facturación: combina margen, cobranza y retención, y descuenta por los descuentos otorgados.</span></div></div>
+          <div class="punto"><span class="n">⚑</span><div><b>Lo que se pierde</b><span>Motivos de pérdida y oportunidades sin movimiento. Dos de los tres primeros motivos son internos: stock y seguimiento.</span></div></div>
+          <div class="punto"><span class="n">◷</span><div><b>Funnel</b><span>Conversión y tiempo por etapa, ciclo, ticket, velocidad y retorno por canal de adquisición.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>05</span></div>
+</section>
+
+<!-- 6 · Integración -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">El diferencial</div>
+  <h2>Un forecast comercial que se convierte en caja y en plan de producción</h2>
+  <p class="lead">Las tres soluciones están conectadas. Al elegir un escenario de venta, la misma pantalla muestra qué pasa con el EBITDA, con la caja y con las unidades que hay que producir.</p>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/comercial-forecast.png" alt="Forecast comercial y su impacto en Finanzas y Producción"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">1</span><div><b>Comercial proyecta</b><span>Cuatro formas de proyectar el trimestre y tres escenarios, con la precisión histórica de cada vendedor.</span></div></div>
+          <div class="punto"><span class="n">2</span><div><b>Finanzas calcula</b><span>El escenario entra al P&amp;L y al flujo de caja: en el probable, la caja perfora el mínimo operativo.</span></div></div>
+          <div class="punto"><span class="n">3</span><div><b>Producción responde</b><span>Las unidades necesarias y el faltante de protector solar, con la fecha límite para emitir la orden.</span></div></div>
+        </div>
+        <p class="lead" style="margin-top:14px">Esa cadena es lo que no da un tablero suelto: la misma decisión mirada por tres áreas a la vez.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>06</span></div>
+</section>
+
+<!-- 7 · Finanzas -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Solución Finanzas</div>
+  <h2>Caja, P&amp;L dinámico y zoom hasta la factura</h2>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/finanzas.png" alt="Tablero de la solución Finanzas"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">◷</span><div><b>Caja a 13 semanas</b><span>Con el mínimo operativo marcado y la semana más exigente identificada.</span></div></div>
+          <div class="punto"><span class="n">≡</span><div><b>P&amp;L mes a mes</b><span>De ingresos brutos a resultado neto, contra presupuesto, con el desvío explicado.</span></div></div>
+          <div class="punto"><span class="n">⌕</span><div><b>Zoom</b><span>De una línea del P&amp;L al centro de costo, y del centro de costo al comprobante, con número de factura y proveedor.</span></div></div>
+          <div class="punto"><span class="n">⚑</span><div><b>Alertas calculadas</b><span>Salen de los mismos números del tablero, no están escritas a mano.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>07</span></div>
+</section>
+
+<!-- 8 · Escenarios -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Simulación</div>
+  <h2>Mover una variable y ver el efecto en el año y en la caja</h2>
+  <p class="lead">Nueve variables: volumen, precio, costos, tipo de cambio, inflación, comisiones, descuentos, personal y cobranzas que se atrasan. Los meses ya cerrados no se tocan.</p>
+  <div class="body">
+    <div class="split">
+      <div class="shot"><img src="caps/finanzas-escenarios.png" alt="Simulador de escenarios de Finanzas"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">▲</span><div><b>Escenarios guardados</b><span>Base, optimista, pesimista y salto del dólar, listos para mostrar en una reunión.</span></div></div>
+          <div class="punto"><span class="n">≋</span><div><b>Impacto completo</b><span>Ingresos, contribución, EBITDA, resultado neto y el flujo de caja de las próximas 13 semanas.</span></div></div>
+          <div class="punto"><span class="n">!</span><div><b>El aviso importante</b><span>En el escenario pesimista, la caja perfora el mínimo en la segunda semana: eso es lo que hay que ver antes, no después.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>08</span></div>
+</section>
+
+<!-- 9 · Mapas -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Territorio</div>
+  <h2>El país, con las ventas, el margen y la cobertura encima</h2>
+  <p class="lead">Mapas reales de las 24 provincias, agrupadas por zona comercial. En Finanzas, ventas y margen. En Comercial, penetración y potencial sin cubrir.</p>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/finanzas-mapa.png" alt="Mapa de ventas por zona"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">◉</span><div><b>Dónde está la plata</b><span>AMBA factura 3.507 millones; Patagonia, con menos volumen, es la zona de mejor margen.</span></div></div>
+          <div class="punto"><span class="n">◎</span><div><b>Dónde falta cobertura</b><span>NOA llega al 35,8% de las farmacias y no tiene vendedor asignado. Cuyo, al 51,4%.</span></div></div>
+          <div class="punto"><span class="n">↔</span><div><b>Mapa y lista juntos</b><span>Se resaltan a la vez, así el mapa muestra dónde y la lista muestra cuánto.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>09</span></div>
+</section>
+
+<!-- 10 · R&D -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Solución R&amp;D</div>
+  <h2>Portfolio, radar del mercado y motor de decisión</h2>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/rd.png" alt="Tablero de la solución R&D"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">$</span><div><b>Inversión</b><span>Ejecutado, comprometido y disponible, por tipo de gasto, unidad de negocio, tecnología y región, con el criterio del Manual de Frascati.</span></div></div>
+          <div class="punto"><span class="n">▤</span><div><b>Portfolio</b><span>Ocho proyectos de la idea al lanzamiento, con hitos, demoras, probabilidad de éxito y valor esperado.</span></div></div>
+          <div class="punto"><span class="n">⚖</span><div><b>Motor de decisión</b><span>Ranking por atractivo con la acción sugerida: acelerar, mantener, pausar, asociarse o cancelar, siempre con el fundamento.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>10</span></div>
+</section>
+
+<!-- 11 · Radar -->
+<section class="slide">
+  <div class="topbar">Las soluciones</div>
+  <div class="eyebrow">Radar</div>
+  <h2>Lo que pasa afuera y toca un producto propio</h2>
+  <p class="lead">Papers, patentes de terceros, cambios de ANMAT, ensayos, startups y acuerdos del sector. Cada ítem trae fuente, fecha, nivel de confiabilidad y qué proyecto propio afecta.</p>
+  <div class="body">
+    <div class="split ancho">
+      <div class="shot"><img src="caps/rd-radar.png" alt="Radar de investigación externa"></div>
+      <div>
+        <div class="puntos">
+          <div class="punto"><span class="n">!</span><div><b>Dos riesgos sobre el mismo proyecto</b><span>Una patente de terceros y un cambio regulatorio caen sobre el solar facial. Conviene decidir antes de seguir invirtiendo.</span></div></div>
+          <div class="punto"><span class="n">+</span><div><b>Oportunidades</b><span>Un paper respalda la combinación que usa el Serum Barrera; un proveedor local baja 18% el costo del envase.</span></div></div>
+          <div class="punto"><span class="n">◷</span><div><b>Competencia</b><span>Inversión estimada de cada competidor, siempre diciendo cómo se calculó y con qué confianza.</span></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>11</span></div>
+</section>
+
+<!-- 12 · Confianza -->
+<section class="slide">
+  <div class="topbar">Cómo está hecho</div>
+  <div class="eyebrow">Confianza en el dato</div>
+  <h2>Cada número dice qué tipo de dato es</h2>
+  <p class="lead">Es la regla que atraviesa todo el sistema: nunca se mezcla lo cerrado con lo proyectado, ni un dato con una estimación.</p>
+  <div class="body">
+    <table>
+      <tr><th>Tipo</th><th>Qué significa</th><th>Ejemplo en el sistema</th></tr>
+      <tr><td><span class="chip c-brand">Conciliado</span></td><td>Cerrado en el ERP y auditado</td><td>P&amp;L de enero a agosto</td></tr>
+      <tr><td><span class="chip c-ok">Operativo</span></td><td>Día a día, todavía sin cerrar</td><td>Ventas de septiembre al día 17, caja de hoy</td></tr>
+      <tr><td><span class="chip c-prox">Proyectado</span></td><td>Forecast sobre el presupuesto vigente</td><td>Octubre a diciembre, flujo a 13 semanas</td></tr>
+      <tr><td><span class="chip c-warn">Estimado</span></td><td>Calculado por el agente, con el método explicado</td><td>Probabilidad de éxito, inversión de la competencia</td></tr>
+    </table>
+    <div class="fila">
+      <div><b>Fuente visible</b><span>Cada cifra cita el sistema del que sale: Tango, IQVia, Elvis, Capataz.</span></div>
+      <div><b>Frecuencia declarada</b><span>Pipeline cada 15 minutos, facturación diaria, mercado mensual.</span></div>
+      <div><b>Zoom al origen</b><span>Del indicador a la línea, de la línea al comprobante.</span></div>
+      <div><b>Aprobación humana</b><span>Mails, órdenes y notas de crédito requieren el visto bueno del CEO.</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>12</span></div>
+</section>
+
+<!-- 13 · Hoja de ruta -->
+<section class="slide">
+  <div class="topbar">Qué sigue</div>
+  <div class="eyebrow">Hoja de ruta</div>
+  <h2>De la sala que ya funciona a la compañía conectada</h2>
+  <div class="body">
+    <div class="grid3">
+      <div class="card">
+        <h3>Ahora</h3>
+        <ul>
+          <li>Agentes de Operaciones y Producción, que cierran el círculo del stock</li>
+          <li>Preguntas libres, con IA sobre los mismos tableros</li>
+          <li>Usuarios, permisos por cargo y registro de quién consultó y aprobó</li>
+        </ul>
+        <span class="pie">Semanas 1 a 6</span>
+      </div>
+      <div class="card">
+        <h3>Después</h3>
+        <ul>
+          <li>Conexión real a Tango, IQVia, Elvis, Capataz, Shopify y Mercado Libre</li>
+          <li>Envío real de mails, después de la aprobación</li>
+          <li>Base de datos propia, con respaldos</li>
+        </ul>
+        <span class="pie">Fase Modelar de RAMPA</span>
+      </div>
+      <div class="card">
+        <h3>Para completar la sala</h3>
+        <ul>
+          <li>Marketing, Producto y Riesgo y Legal con su propia solución</li>
+          <li>Detalle por sociedad y moneda, e historial de cambios de cada dato</li>
+          <li>Mapas hasta provincia y localidad</li>
+        </ul>
+        <span class="pie">Un vertical por trimestre</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Caviahue · Sala 24/7</span><span>13</span></div>
+</section>
+
+<!-- 14 · Cierre -->
+<section class="slide cover">
+  <div class="pua-grande" style="right:0.9in;bottom:0.7in;opacity:0.12"></div>
+  <div class="marca"><span class="pua"></span><span>Laboratorio Copahue · 24/7 AI Ready</span></div>
+  <h1 style="font-size:54px">La sala ya está<br>abierta.</h1>
+  <p class="sub">Entra por navegador, con usuario y contraseña. Lo que falta es reemplazar los datos simulados por los sistemas reales de Caviahue, y sumar los agentes que quedan.</p>
+  <p class="tag">Más capacidad con la misma gente.</p>
+  <p class="lead" style="margin-top:22px"><span class="mono">copahue.moshito.work</span></p>
+</section>
+
+</body>
+</html>

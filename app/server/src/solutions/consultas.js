@@ -3,6 +3,8 @@
 import * as finanzas from "./finanzas.js";
 import * as comercial from "./comercial.js";
 import * as rd from "./rd.js";
+import * as operaciones from "./operaciones.js";
+import * as produccion from "./produccion.js";
 
 const n = (v, dec = 0) => new Intl.NumberFormat("es-AR", { minimumFractionDigits: dec, maximumFractionDigits: dec }).format(v);
 const r0 = (v) => Math.round(v);
@@ -267,7 +269,86 @@ const RD = [
   }
 ];
 
-export const POR_AGENTE = { comercial: COMERCIAL, finanzas: FINANZAS, rd: RD, ceo: [...COMERCIAL, ...FINANZAS, ...RD] };
+const OPERACIONES = [
+  {
+    id: "stock-real",
+    ejemplo: "¿Cuánto stock real tenemos y dónde difiere de Tango?",
+    keys: ["stock", "tenemos", "cuanto", "deposito", "depositos", "tango", "difiere", "diferencia", "real", "inventario"],
+    responder() {
+      const s = operaciones.stock();
+      const dif = s.filter((p) => p.diferencia !== 0);
+      const fila = (p) => `- **${p.label}**: ${n(p.real)} u reales (${n(p.disprofarma)} Disprofarma + ${n(p.shipnow)} Ship Now), ${n(p.cobertura, 1)} días de cobertura${p.diferencia ? ` · Tango dice ${n(p.tango)} (${p.diferencia > 0 ? "+" : ""}${n(p.diferencia)})` : ""}`;
+      return `Stock real al ${operaciones.HOY.slice(8)}/${operaciones.HOY.slice(5, 7)} [Disprofarma] [Ship Now] [Tango]:\n\n${s.map(fila).join("\n")}\n\n${dif.length} productos tienen diferencia entre el ERP y el depósito.\n\nRecomendación: ajustar Tango antes de confirmar el plan de producción, porque hoy se planifica con stock que no existe. [Ver el tablero](#/operaciones)`;
+    }
+  },
+  {
+    id: "quiebres",
+    ejemplo: "¿Dónde estamos quebrados en farmacias online?",
+    keys: ["quiebre", "quiebres", "quebrado", "falta", "farmacias", "online", "tiendas", "sin", "gondola"],
+    responder() {
+      const q = operaciones.QUIEBRES;
+      const perdida = operaciones.indicadores().kpis.find((k) => k.id === "perdida");
+      return `Relevamiento diario de ${operaciones.TIENDAS_RELEVADAS} tiendas online [Informe de stock online]:\n\n${q.map((x) => `- **${x.producto}**: sin stock en ${x.sinStock} tiendas (${n(x.pct, 1)}%), ${x.tendencia > 0 ? `empeoró ${x.tendencia} en la semana` : x.tendencia < 0 ? `mejoró ${Math.abs(x.tendencia)} en la semana` : "estable"}\n  Cadenas: ${x.cadenas.join(", ")}`).join("\n")}\n\nVenta perdida estimada del mes: **${n(perdida.valor, 1)} ARS M** (${perdida.detalle.toLowerCase()}).\n\nRecomendación: priorizar la reposición del protector solar en las cadenas con mayor sell-out y avisar a Comercial antes de que prometa entregas.`;
+    }
+  },
+  {
+    id: "vencimientos",
+    ejemplo: "¿Qué lotes vencen en los próximos meses?",
+    keys: ["lote", "lotes", "vence", "vencen", "vencimiento", "vencimientos", "caduca"],
+    responder() {
+      const l = operaciones.LOTES;
+      return `Lotes ordenados por vencimiento [Disprofarma] [Ship Now]:\n\n${l.map((x) => `- **${x.producto}**, lote ${x.lote}: ${n(x.unidades)} u, vence el ${x.vence.slice(8)}/${x.vence.slice(5, 7)}/${x.vence.slice(0, 4)} (${x.diasParaVencer} días)${x.critico ? " · **crítico**" : ""}`).join("\n")}\n\nRecomendación: incluir el lote de Crema de Pies en la grilla promocional de octubre y colocarlo en farmacias de alta rotación.`;
+    }
+  },
+  {
+    id: "logistica",
+    ejemplo: "¿Cómo viene el desempeño de las entregas?",
+    keys: ["entrega", "entregas", "logistica", "otif", "demora", "demoras", "operador", "transito", "incidencia"],
+    responder() {
+      const e = operaciones.ENTREGAS;
+      return `Entregas del mes [Disprofarma] [Ship Now]:\n\n- **A tiempo y completas**: ${n(e.otif, 1)}% contra un objetivo de ${e.otifObjetivo}%\n- ${e.pedidosConDemora} pedidos con demora sobre ${n(e.pedidosMes)}\n- Costo logístico: ARS ${e.costoLogisticoUnidad} por unidad, ${n(e.costoLogisticoPct, 1)}% de las ventas\n\nPor operador:\n${e.porOperador.map((o) => `- ${o.operador}: ${n(o.otif, 1)}% a tiempo, ${o.incidencias} incidencias`).join("\n")}\n\nEn tránsito: ${e.enTransito.map((t) => `${t.producto.split(" ").slice(0, 2).join(" ")} (${n(t.unidades)} u, llega en ${t.diasParaLlegar} días)`).join("; ")}.\n\nRecomendación: las demoras de más de 48 horas son la mayor causa de incidencia. Conviene revisarlas con el operador antes del pico de temporada.`;
+    }
+  }
+];
+
+const PRODUCCION = [
+  {
+    id: "plan-alcanza",
+    ejemplo: "¿Alcanza el plan de producción para el próximo ciclo?",
+    keys: ["plan", "alcanza", "produccion", "produccion", "ciclo", "demanda", "cubre", "faltante", "falta"],
+    responder() {
+      const p = produccion.plan();
+      const faltan = p.filter((x) => x.faltante > 0);
+      const sug = produccion.sugerencias();
+      return `Plan contra demanda del bimestre, con stock real [Capataz] [Disprofarma]:\n\n${p.map((x) => `- **${x.producto}**: ${n(x.stockReal)} u de stock + ${n(x.planificado)} planificadas contra ${n(x.demanda)} de demanda → ${x.faltante ? `**faltan ${n(x.faltante)} u**` : `sobran ${n(x.sobrante)} u`}`).join("\n")}\n\n${faltan.length ? `Órdenes sugeridas: ${sug.map((s) => `${s.producto.split(" ").slice(0, 3).join(" ")} ${n(s.unidades)} u`).join(", ")}, a emitir antes del ${sug[0].emitirAntesDe.slice(8)}/${sug[0].emitirAntesDe.slice(5, 7)} por el lead time de ${produccion.LEAD_TIME_SEMANAS} semanas.` : "Todo el portfolio está cubierto."}\n\nRecomendación: aprobar las órdenes y postergar el lote de Crema Corporal, que sobra. [Ver el plan](#/produccion)`;
+    }
+  },
+  {
+    id: "ordenes",
+    ejemplo: "¿Qué órdenes conviene emitir esta semana?",
+    keys: ["orden", "ordenes", "emitir", "emitimos", "semana", "planta", "plantas", "lote", "producir"],
+    responder() {
+      const sug = produccion.sugerencias();
+      const post = produccion.postergables();
+      const sim = produccion.simular();
+      return `Órdenes sugeridas [Capataz]:\n\n${sug.map((s) => `- **${s.producto}** en ${s.planta}: ${n(s.unidades)} u (faltante ${n(s.faltante)} + colchón ${n(s.colchon)}), ARS ${n(s.costo, 1)} M\n  ${s.riesgo}`).join("\n")}\n\nY una postergación:\n${post.map((x) => `- **${x.producto}**: ${x.nota}. Libera ARS ${n(x.liberaCaja, 1)} M`).join("\n")}\n\nHaciendo las dos cosas, los ${sim.total} productos quedan cubiertos y el impacto neto en caja es de **ARS ${n(sim.impactoNeto, 1)} M**.\n\nRecomendación: las órdenes requieren aprobación de Dirección. Quedan ${sug[0].diasParaDecidir} días antes de que el lead time deje sin margen a octubre.`;
+    }
+  },
+  {
+    id: "plantas",
+    ejemplo: "¿Cómo está la capacidad de las plantas?",
+    keys: ["planta", "plantas", "capacidad", "ocupacion", "tercero", "terceros", "costo", "scrap", "cumplimiento"],
+    responder() {
+      const ind = produccion.indicadores();
+      return `Plantas contratadas [Capataz]:\n\n${produccion.PLANTAS.map((p) => `- **${p.label}** (${p.especialidad}): ${p.ocupacion}% de ocupación, ${n(p.capacidadMes)} u/mes, ARS ${p.costoUnidad} por unidad, ${p.scrap}% de scrap`).join("\n")}\n\nCumplimiento del plan: ${ind.kpis.find((k) => k.id === "cumplimiento").valor}% promedio de los últimos 6 meses, contra un objetivo de 95%.\n\nRecomendación: Planta 2 está al 94% justo donde hay que producir el protector solar. Conviene confirmar el turno antes de emitir la orden, o evaluar mover parte del volumen.`;
+    }
+  }
+];
+
+export const POR_AGENTE = {
+  comercial: COMERCIAL, finanzas: FINANZAS, rd: RD, operaciones: OPERACIONES, produccion: PRODUCCION,
+  ceo: [...COMERCIAL, ...FINANZAS, ...RD, ...OPERACIONES, ...PRODUCCION]
+};
 
 const stems = (s) => norm(s).split(/[^a-z0-9ñ]+/).filter((w) => w.length > 2).map((w) => w.slice(0, 5));
 

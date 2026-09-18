@@ -9,9 +9,9 @@ const ESTADO_LABEL = { conciliado: "Conciliado", operativo: "Operativo", proyect
 
 const Tipo = ({ tipo }) => <span className={`tipo tipo-${tipo}`}>{ESTADO_LABEL[tipo] || tipo}</span>;
 
-export default function FinanzasView() {
+export default function FinanzasView({ sub }) {
   const { data, error } = useFetch("/api/solutions/finanzas");
-  const [tab, setTab] = useState("tablero");
+  const [tab, setTab] = useState(sub || "tablero");
 
   if (error) return <p className="form-error">{error}</p>;
   if (!data) return <p className="thinking">Cargando la solución…</p>;
@@ -41,7 +41,7 @@ export default function FinanzasView() {
 
       {tab === "tablero" && <Tablero data={data} />}
       {tab === "pnl" && <Pnl data={data} />}
-      {tab === "analisis" && <Analisis />}
+      {tab === "analisis" && <Analisis dimInicial={window.location.hash.split("/")[3]} />}
       {tab === "escenarios" && <Escenarios />}
     </div>
   );
@@ -244,9 +244,9 @@ function Pnl({ data }) {
 
 const DIMENSIONES = [["canal", "Canal"], ["producto", "Producto"], ["zona", "Zona"], ["cliente", "Cliente"]];
 
-function Analisis() {
+function Analisis({ dimInicial }) {
   const { data } = useFetch("/api/solutions/finanzas/dimensiones");
-  const [dim, setDim] = useState("canal");
+  const [dim, setDim] = useState(dimInicial || "canal");
   const [medida, setMedida] = useState("ventas");
   if (!data) return <p className="thinking">Cargando…</p>;
   const filas = data[dim];

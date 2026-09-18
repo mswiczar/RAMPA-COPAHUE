@@ -9,6 +9,8 @@ import DeliverablesView from "./components/DeliverablesView.jsx";
 import FinanzasView from "./components/FinanzasView.jsx";
 import ComercialView from "./components/ComercialView.jsx";
 import RDView from "./components/RDView.jsx";
+import OperacionesView from "./components/OperacionesView.jsx";
+import ProduccionView from "./components/ProduccionView.jsx";
 
 function useRoute() {
   const read = () => (window.location.hash.replace(/^#\/?/, "") || "sala").split("/");
@@ -41,6 +43,8 @@ export default function App({ user, onLogout }) {
     ["sala", "Sala"],
     ["comercial", "Comercial", null],
     ["rd", "R&D", null],
+    ["operaciones", "Operaciones", null],
+    ["produccion", "Producción", null],
     ["finanzas", "Finanzas", null],
     ["tareas", "Tareas", summary?.pendingApprovals],
     ["programaciones", "Programaciones", null],
@@ -80,9 +84,11 @@ export default function App({ user, onLogout }) {
             {agents && <AgentPanel key={agentId} agentId={agentId} agents={agents} />}
           </div>
         )}
-        {view === "comercial" && <ComercialView />}
-        {view === "rd" && <RDView />}
-        {view === "finanzas" && <FinanzasView />}
+        {view === "comercial" && <ComercialView key={param} sub={param} />}
+        {view === "rd" && <RDView key={param} sub={param} />}
+        {view === "operaciones" && <OperacionesView key={param} sub={param} />}
+        {view === "produccion" && <ProduccionView key={param} sub={param} />}
+        {view === "finanzas" && <FinanzasView key={param} sub={param} />}
         {view === "tareas" && <TasksView agents={agents || []} focus={param} />}
         {view === "programaciones" && <SchedulesView agents={agents || []} />}
         {view === "bandeja" && <OutboxView agents={agents || []} focus={param} />}

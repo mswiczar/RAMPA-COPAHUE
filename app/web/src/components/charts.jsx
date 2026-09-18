@@ -25,17 +25,16 @@ function useTooltip() {
 }
 
 /** Barras mensuales contra una marca de presupuesto. El estado del dato cambia la textura. */
-export function BarsVsTarget({ data, unidad = "ARS M", alto = 210 }) {
+export function BarsVsTarget({ data, unidad = "ARS M", alto = 210, leyenda }) {
   const [tip, setTip] = useTooltip();
   const max = Math.max(...data.map((d) => Math.max(d.valor, d.target))) * 1.12;
   const ancho = 100 / data.length;
   return (
     <figure className="chart">
       <div className="chart-legend">
-        <span><i className="sw sw-solid" />Real conciliado</span>
-        <span><i className="sw sw-partial" />Operativo (mes en curso)</span>
-        <span><i className="sw sw-fore" />Proyectado</span>
-        <span><i className="sw sw-target" />Presupuesto</span>
+        {(leyenda || [["sw-solid", "Real conciliado"], ["sw-partial", "Operativo (mes en curso)"], ["sw-fore", "Proyectado"], ["sw-target", "Presupuesto"]]).map(([cls, label]) => (
+          <span key={label}><i className={"sw " + cls} />{label}</span>
+        ))}
       </div>
       <div className="chart-plot" style={{ height: alto }} onMouseLeave={() => setTip(null)}>
         <svg viewBox={`0 0 100 ${alto}`} preserveAspectRatio="none" aria-hidden="true">

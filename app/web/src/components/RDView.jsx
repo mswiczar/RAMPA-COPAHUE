@@ -8,9 +8,9 @@ const ESTADO_LABEL = { conciliado: "Conciliado", operativo: "Operativo", proyect
 const Tipo = ({ tipo }) => <span className={`tipo tipo-${tipo}`}>{ESTADO_LABEL[tipo] || tipo}</span>;
 const ETAPAS = ["Idea", "Investigación", "Prototipo", "Validación", "Desarrollo", "Lanzamiento"];
 
-export default function RDView() {
+export default function RDView({ sub }) {
   const { data, error } = useFetch("/api/solutions/rd");
-  const [tab, setTab] = useState("tablero");
+  const [tab, setTab] = useState(sub || "tablero");
   if (error) return <p className="form-error">{error}</p>;
   if (!data) return <p className="thinking">Cargando la solución…</p>;
 

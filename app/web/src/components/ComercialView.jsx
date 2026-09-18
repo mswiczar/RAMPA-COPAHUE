@@ -7,9 +7,9 @@ const TABS = [["tablero", "Tablero"], ["pipeline", "Pipeline"], ["funnel", "Funn
 const ESTADO_LABEL = { conciliado: "Conciliado", operativo: "Operativo", proyectado: "Proyectado", estimado: "Estimado" };
 const Tipo = ({ tipo }) => <span className={`tipo tipo-${tipo}`}>{ESTADO_LABEL[tipo] || tipo}</span>;
 
-export default function ComercialView() {
+export default function ComercialView({ sub }) {
   const { data, error } = useFetch("/api/solutions/comercial");
-  const [tab, setTab] = useState("tablero");
+  const [tab, setTab] = useState(sub || "tablero");
   if (error) return <p className="form-error">{error}</p>;
   if (!data) return <p className="thinking">Cargando la solución…</p>;
 

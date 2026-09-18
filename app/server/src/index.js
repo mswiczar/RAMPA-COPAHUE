@@ -11,6 +11,8 @@ import * as scheduler from "./scheduler.js";
 import * as finanzas from "./solutions/finanzas.js";
 import * as comercial from "./solutions/comercial.js";
 import * as rd from "./solutions/rd.js";
+import * as operaciones from "./solutions/operaciones.js";
+import * as produccion from "./solutions/produccion.js";
 import * as consultas from "./solutions/consultas.js";
 import { seed } from "./seed.js";
 
@@ -62,7 +64,7 @@ function agentSummary(a) {
   const tasks = db.tasks.filter((t) => t.agentId === a.id);
   return {
     id: a.id, name: a.name, short: a.short, tagline: a.tagline, mission: a.mission, systems: a.systems, alerts: a.alerts,
-    solucion: [finanzas.META.agentId, comercial.META.agentId, rd.META.agentId].includes(a.id) ? a.id : null,
+    solucion: ["finanzas", "comercial", "rd", "operaciones", "produccion"].includes(a.id) ? a.id : null,
     suggestions: [...consultas.ejemplos(a.id).slice(0, 4), ...a.qa.map((x) => x.q)].slice(0, 6),
     activeTasks: tasks.filter((t) => ["pendiente", "en_curso"].includes(t.status)).length,
     pendingApprovals: tasks.filter((t) => t.status === "esperando_aprobacion").length,
@@ -135,7 +137,7 @@ app.get("/api/geo/provincias", wrap((req, res) => { res.set("Cache-Control", "pu
 
 /* ---------- Soluciones (tableros por agente) ---------- */
 
-app.get("/api/solutions", wrap(() => [finanzas.META, comercial.META, rd.META].map(({ id, agentId, titulo, bajada }) => ({ id, agentId, titulo, bajada }))));
+app.get("/api/solutions", wrap(() => [finanzas.META, comercial.META, rd.META, operaciones.META, produccion.META].map(({ id, agentId, titulo, bajada }) => ({ id, agentId, titulo, bajada }))));
 
 app.get("/api/solutions/finanzas", wrap(() => ({
   meta: finanzas.META,
@@ -177,6 +179,13 @@ app.get("/api/solutions/rd/inversion", wrap((req) => {
   return rd.inversionAdicional(Math.min(2000, monto));
 }));
 app.get("/api/solutions/comercial/integracion", wrap((req) => comercial.integracion(String(req.query.escenario || "probable"))));
+
+app.get("/api/solutions/operaciones", wrap(() => operaciones.resumen()));
+app.get("/api/solutions/produccion", wrap(() => produccion.resumen()));
+app.get("/api/solutions/produccion/simular", wrap((req) => produccion.simular({
+  aprobarSugeridas: req.query.aprobar !== "0",
+  postergarSobrantes: req.query.postergar !== "0"
+})));
 
 /* ---------- Entregables y bandeja de salida ---------- */
 
