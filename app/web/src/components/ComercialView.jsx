@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useFetch } from "../live.jsx";
 import { RankBars, fmtM, fmtPct } from "./charts.jsx";
+import MapaArgentina from "./MapaArgentina.jsx";
 
 const TABS = [["tablero", "Tablero"], ["pipeline", "Pipeline"], ["funnel", "Funnel"], ["forecast", "Forecast"], ["clientes", "Clientes y territorios"], ["ia", "Inteligencia"]];
 const ESTADO_LABEL = { conciliado: "Conciliado", operativo: "Operativo", proyectado: "Proyectado", estimado: "Estimado" };
@@ -159,7 +160,15 @@ function Pipeline({ p }) {
               {DIMS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
             </select>
           </div>
-          <RankBars data={p[dim].map((x) => ({ label: x.label, valor: x.bruto, nota: `${x.cantidad} oportunidades · ponderado ${fmtM(x.ponderado)}` }))} />
+          {dim === "porRegion" ? (
+            <MapaArgentina
+              valores={p.porRegion.filter((r) => r.label !== "Nacional").map((r) => ({ zona: r.label, valor: r.bruto, etiqueta: "Pipeline bruto", detalle: `${r.cantidad} oportunidades · ponderado ${fmtM(r.ponderado, 1)} M` }))}
+              unidad="ARS M"
+              nota="Pipeline abierto por región; las cuentas nacionales no se mapean"
+            />
+          ) : (
+            <RankBars data={p[dim].map((x) => ({ label: x.label, valor: x.bruto, nota: `${x.cantidad} oportunidades · ponderado ${fmtM(x.ponderado)}` }))} />
+          )}
         </section>
 
         <section className="card">
@@ -375,8 +384,31 @@ function Forecast({ f, desempeno }) {
   );
 }
 
+/** Los territorios de la fuerza de ventas se agrupan en las zonas del mapa. */
+const ZONA_DE_TERRITORIO = { "AMBA Norte": "AMBA", "AMBA Sur": "AMBA", "Córdoba": "Córdoba", "Cuyo": "Cuyo", "Patagonia": "Patagonia", NOA: "NOA", Litoral: "Litoral", "Santa Fe": "Santa Fe" };
+
+function zonasDeTerritorios(territorios, medida) {
+  const mapa = new Map();
+  for (const t of territorios) {
+    const zona = ZONA_DE_TERRITORIO[t.territorio] || t.territorio;
+    const acc = mapa.get(zona) || { zona, objetivo: 0, cubiertas: 0, potencial: 0, responsables: [] };
+    acc.objetivo += t.farmaciasObjetivo;
+    acc.cubiertas += t.cubiertas;
+    acc.potencial += t.potencial;
+    acc.responsables.push(t.vendedor);
+    mapa.set(zona, acc);
+  }
+  return [...mapa.values()].map((z) => ({
+    zona: z.zona,
+    valor: medida === "penetracion" ? Math.round((z.cubiertas / z.objetivo) * 1000) / 10 : z[medida],
+    etiqueta: medida === "penetracion" ? "Penetración" : medida === "potencial" ? "Farmacias sin cubrir" : "Farmacias cubiertas",
+    detalle: `${z.cubiertas} de ${z.objetivo} farmacias · ${[...new Set(z.responsables)].join(", ")}`
+  }));
+}
+
 function Clientes() {
   const { data } = useFetch("/api/solutions/comercial/clientes");
+  const [medida, setMedida] = useState("penetracion");
   if (!data) return <p className="thinking">Cargando…</p>;
   return (
     <div className="solution">
@@ -384,7 +416,7 @@ function Clientes() {
         <section className="card">
           <div className="card-head"><h2>Concentración de ventas</h2><Tipo tipo="conciliado" /></div>
           <RankBars data={data.cuentas.map((c) => ({ label: c.cliente, valor: c.ventasAnio, nota: `${c.participacion}% de la facturación · margen ${c.margenPct}%` }))} />
-          <p className="form-error small">Las tres primeras cuentas concentran el {data.concentracion.top3}% de las ventas. {data.concentracion.nota}</p>
+          <p className="form-error small">Las tres primeras cuentas concentran el {fmtM(data.concentracion.top3, 1)}% de las ventas. {data.concentracion.nota}</p>
         </section>
 
         <section className="card">
@@ -414,7 +446,27 @@ function Clientes() {
       </div>
 
       <section className="card wide">
-        <div className="card-head"><h2>Cobertura por territorio</h2><span className="muted">El mapa geográfico queda para la próxima versión</span></div>
+        <div className="card-head">
+          <h2>Mapa de cobertura</h2>
+          <div className="segmented">
+            {[["penetracion", "Penetración"], ["potencial", "Potencial sin cubrir"], ["cubiertas", "Farmacias cubiertas"]].map(([id, label]) => (
+              <label key={id} className={medida === id ? "on" : ""}>
+                <input type="radio" name="medida-mapa" value={id} checked={medida === id} onChange={() => setMedida(id)} />
+                {label}
+              </label>
+            ))}
+          </div>
+        </div>
+        <MapaArgentina
+          valores={zonasDeTerritorios(data.territorios, medida)}
+          unidad={medida === "penetracion" ? "%" : "farmacias"}
+          formato={(v) => fmtM(v, medida === "penetracion" ? 1 : 0)}
+          nota="Las zonas agrupan los territorios de la fuerza de ventas"
+        />
+      </section>
+
+      <section className="card wide">
+        <div className="card-head"><h2>Cobertura por territorio</h2><span className="muted">Detalle del mapa</span></div>
         <div className="table-wrap">
           <table className="table">
             <thead><tr><th scope="col">Territorio</th><th scope="col">Responsable</th><th scope="col" className="num">Farmacias objetivo</th><th scope="col" className="num">Cubiertas</th><th scope="col" className="num">Penetración</th><th scope="col" className="num">Potencial sin cubrir</th></tr></thead>

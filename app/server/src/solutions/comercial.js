@@ -235,7 +235,9 @@ export function clientes() {
       { territorio: "Córdoba", vendedor: "APM-03", farmaciasObjetivo: 260, cubiertas: 218, penetracion: 83.8, potencial: 42 },
       { territorio: "Cuyo", vendedor: "APM-05", farmaciasObjetivo: 210, cubiertas: 108, penetracion: 51.4, potencial: 102 },
       { territorio: "Patagonia", vendedor: "APM-06", farmaciasObjetivo: 180, cubiertas: 163, penetracion: 90.6, potencial: 17 },
-      { territorio: "NOA", vendedor: "Sin asignar", farmaciasObjetivo: 240, cubiertas: 86, penetracion: 35.8, potencial: 154 }
+      { territorio: "NOA", vendedor: "Sin asignar", farmaciasObjetivo: 240, cubiertas: 86, penetracion: 35.8, potencial: 154 },
+      { territorio: "Litoral", vendedor: "KAM Droguerías", farmaciasObjetivo: 290, cubiertas: 171, penetracion: 59, potencial: 119 },
+      { territorio: "Santa Fe", vendedor: "APM-04", farmaciasObjetivo: 200, cubiertas: 152, penetracion: 76, potencial: 48 }
     ],
     enRiesgo: [
       { cliente: "Droguería B", motivo: "Contrato vence el 31/10 y tiene ARS 31 M vencidos", severidad: "crit" },

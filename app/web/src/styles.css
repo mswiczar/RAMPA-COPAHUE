@@ -369,6 +369,32 @@ code.cell-sub { font-size: 11.5px; }
 .cross { background: var(--ground-2); border-radius: 12px; padding: 14px 16px; }
 .cross .sub { margin-top: 0; }
 
+/* Mapa */
+.mapa { margin: 0; }
+.mapa-cuerpo { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(200px, 260px); gap: 18px; align-items: start; }
+.mapa-plot { position: relative; background: var(--brand-softer); border: 1px solid var(--line); border-radius: 14px; padding: 10px; display: flex; justify-content: center; }
+/* El país es mucho más alto que ancho: el mapa se dimensiona por altura y se centra. */
+.mapa-plot svg { height: min(520px, 68vh); width: auto; max-width: 100%; display: block; }
+.mapa-plot path { transition: filter 0.15s ease; cursor: default; }
+.mapa-plot path.zona { filter: brightness(1.06); }
+.mapa-plot path.on { stroke: var(--text); stroke-width: 1.2; filter: brightness(1.1); }
+.mapa-tip { position: absolute; left: 12px; bottom: 12px; background: var(--text); color: #fff; border-radius: 10px; padding: 9px 12px; font-size: 12px; display: flex; flex-direction: column; gap: 2px; pointer-events: none; box-shadow: 0 6px 18px rgba(15, 46, 60, 0.28); max-width: 80%; }
+.mapa-tip strong { font-size: 13px; }
+.mapa-tip span { display: flex; gap: 12px; justify-content: space-between; }
+.mapa-tip i { font-style: normal; opacity: 0.7; }
+.mapa-tip .det { opacity: 0.85; display: block; }
+.mapa-lado { display: flex; flex-direction: column; gap: 12px; }
+.mapa-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.mapa-lista li { display: grid; grid-template-columns: 14px 1fr auto; gap: 9px; align-items: center; padding: 7px 6px; border-radius: 8px; font-size: 13px; }
+.mapa-lista li.on { background: var(--brand-soft); }
+.mapa-lista .sw { width: 14px; height: 14px; border-radius: 4px; }
+.mapa-lista .num { font-variant-numeric: tabular-nums; font-weight: 600; }
+.mapa-lista .num i { font-style: normal; font-weight: 400; color: var(--muted); font-size: 11px; margin-left: 4px; }
+.mapa-escala { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+.mapa-escala .barras { display: flex; flex: 1; height: 10px; border-radius: 999px; overflow: hidden; }
+.mapa-escala .barras i { flex: 1; }
+@media (max-width: 760px) { .mapa-cuerpo { grid-template-columns: 1fr; } }
+
 /* R&D */
 .etapas { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
 .etapa h3 { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); font-family: var(--sans); font-weight: 600; margin-bottom: 8px; }

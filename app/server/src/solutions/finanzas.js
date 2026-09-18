@@ -37,13 +37,15 @@ const PRODUCTOS = [
   { id: "gel", label: "Gel Limpiador 150ml", peso: 0.08, margen: 0.47 }
 ];
 
+// Las zonas coinciden con las del mapa de provincias (geo/provincias-ar.json).
 const ZONAS = [
-  { id: "amba", label: "AMBA", peso: 0.46, margen: 0.5 },
-  { id: "cordoba", label: "Córdoba", peso: 0.13, margen: 0.53 },
-  { id: "santafe", label: "Santa Fe", peso: 0.11, margen: 0.52 },
-  { id: "patagonia", label: "Patagonia", peso: 0.12, margen: 0.56 },
-  { id: "mendoza", label: "Mendoza", peso: 0.09, margen: 0.51 },
-  { id: "noa", label: "NOA", peso: 0.09, margen: 0.48 }
+  { id: "amba", label: "AMBA", peso: 0.4, margen: 0.5 },
+  { id: "cordoba", label: "Córdoba", peso: 0.12, margen: 0.53 },
+  { id: "santafe", label: "Santa Fe", peso: 0.1, margen: 0.52 },
+  { id: "litoral", label: "Litoral", peso: 0.09, margen: 0.49 },
+  { id: "cuyo", label: "Cuyo", peso: 0.09, margen: 0.51 },
+  { id: "noa", label: "NOA", peso: 0.09, margen: 0.48 },
+  { id: "patagonia", label: "Patagonia", peso: 0.11, margen: 0.56 }
 ];
 
 const CLIENTES = [

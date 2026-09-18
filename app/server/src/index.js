@@ -128,6 +128,11 @@ app.delete("/api/schedules/:id", wrap((req) => { scheduler.remove(req.params.id)
 app.post("/api/schedules/:id/run", wrap((req) => scheduler.fire(req.params.id, true)));
 app.get("/api/cron/preview", wrap((req) => ({ next: scheduler.nextRun(String(req.query.expr || "")) })));
 
+/* ---------- Geografía (mapas) ---------- */
+
+const GEO_PROVINCIAS = JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)), "geo/provincias-ar.json"), "utf8"));
+app.get("/api/geo/provincias", wrap((req, res) => { res.set("Cache-Control", "public, max-age=86400"); return GEO_PROVINCIAS; }));
+
 /* ---------- Soluciones (tableros por agente) ---------- */
 
 app.get("/api/solutions", wrap(() => [finanzas.META, comercial.META, rd.META].map(({ id, agentId, titulo, bajada }) => ({ id, agentId, titulo, bajada }))));

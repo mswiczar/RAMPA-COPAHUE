@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "../api.js";
 import { useFetch } from "../live.jsx";
 import { BarsVsTarget, CashLine, RankBars, Waterfall, fmtM, fmtPct } from "./charts.jsx";
+import MapaArgentina from "./MapaArgentina.jsx";
 
 const TABS = [["tablero", "Tablero"], ["pnl", "P&L dinámico"], ["analisis", "Análisis"], ["escenarios", "Escenarios"]];
 const ESTADO_LABEL = { conciliado: "Conciliado", operativo: "Operativo", proyectado: "Proyectado", estimado: "Estimado" };
@@ -246,6 +247,7 @@ const DIMENSIONES = [["canal", "Canal"], ["producto", "Producto"], ["zona", "Zon
 function Analisis() {
   const { data } = useFetch("/api/solutions/finanzas/dimensiones");
   const [dim, setDim] = useState("canal");
+  const [medida, setMedida] = useState("ventas");
   if (!data) return <p className="thinking">Cargando…</p>;
   const filas = data[dim];
 
@@ -295,10 +297,35 @@ function Analisis() {
               </table>
             </div>
             {dim === "cliente" && <p className="muted small">Droguería A y Droguería B concentran volumen con el margen más bajo y la mayor deuda vencida.</p>}
-            {dim === "zona" && <p className="muted small">El mapa geográfico queda para la próxima versión: por ahora, ranking por zona.</p>}
           </div>
         </div>
       </section>
+
+      {dim === "zona" && (
+        <section className="card wide">
+          <div className="card-head">
+            <h2>Mapa de {medida === "ventas" ? "ventas" : "margen"} por zona</h2>
+            <div className="segmented">
+              {[["ventas", "Ventas"], ["margenPct", "Margen"]].map(([id, label]) => (
+                <label key={id} className={medida === id ? "on" : ""}>
+                  <input type="radio" name="medida" value={id} checked={medida === id} onChange={() => setMedida(id)} />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+          <MapaArgentina
+            valores={filas.map((z) => ({
+              zona: z.label, valor: z[medida],
+              etiqueta: medida === "ventas" ? "Ventas ene-ago" : "Margen",
+              detalle: medida === "ventas" ? `Margen ${z.margenPct}%` : `Ventas ${fmtM(z.ventas)} ARS M`
+            }))}
+            unidad={medida === "ventas" ? "ARS M" : "%"}
+            formato={(v) => fmtM(v, medida === "ventas" ? 0 : 1)}
+            nota="Cada provincia toma el valor de su zona comercial"
+          />
+        </section>
+      )}
     </div>
   );
 }
