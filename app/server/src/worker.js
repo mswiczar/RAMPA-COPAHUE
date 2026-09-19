@@ -2,6 +2,8 @@
 import { db, newId, now, changed, logActivity, HttpError } from "./store.js";
 import { byId } from "./agents.js";
 import * as brain from "./brain.js";
+import * as motor from "./ia/motor.js";
+import * as catIA from "./ia/catalogo.js";
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const EMAIL_RE = /^[\w.+-]+@[\w-]+\.[\w.]+$/;
@@ -14,7 +16,14 @@ export function normRecipients(value) {
   return [...new Set(clean)];
 }
 
-export function createTask({ agentId, type, title, instruction, recipients = [], source = "ceo", scheduleId = null, requiresApproval = true, pedidoPor = null }, { run = true } = {}) {
+/** Elección de modelo que viene con la tarea: perfil y flujo, o automático. */
+export function normIA(ia) {
+  const perfil = ia?.perfil && ia.perfil !== "auto" && catIA.perfil(ia.perfil) ? ia.perfil : "auto";
+  const flujo = ia?.flujo && catIA.FLUJOS[ia.flujo] ? ia.flujo : "auto";
+  return { perfil, flujo, ...(ia?.origen ? { origen: String(ia.origen).slice(0, 80) } : {}) };
+}
+
+export function createTask({ agentId, type, title, instruction, recipients = [], source = "ceo", scheduleId = null, requiresApproval = true, pedidoPor = null, ia = null, rol = null }, { run = true } = {}) {
   const agent = byId[agentId];
   if (!agent) throw new HttpError(404, "No existe ese agente");
   if (!brain.TYPES[type]) throw new HttpError(400, "Tipo de tarea inválido");
@@ -27,7 +36,9 @@ export function createTask({ agentId, type, title, instruction, recipients = [],
     source, scheduleId, requiresApproval: requiresApproval !== false,
     status: "pendiente", createdAt: now(), startedAt: null, finishedAt: null,
     deliverableId: null, emailId: null,
-    log: [{ ts: now(), text: source === "programacion" ? "Creada por una programación" : `Encargada por ${pedidoPor || "el CEO"}` }], pedidoPor
+    log: [{ ts: now(), text: source === "programacion" ? "Creada por una programación" : `Encargada por ${pedidoPor || "el CEO"}` }], pedidoPor,
+    // Con qué inteligencia se hace, y sobre qué datos. Hoy todos los datos son sintéticos.
+    ia: normIA(ia), rol, datos: "sintetico", inferencias: []
   };
   db.tasks.unshift(task);
   logActivity(agentId, `Nueva tarea: ${task.title}`);
@@ -38,14 +49,32 @@ export function createTask({ agentId, type, title, instruction, recipients = [],
 
 const step = (task, text) => task.log.push({ ts: now(), text });
 
-/** Genera los resultados de la tarea en forma sincrónica. */
-export function produce(task) {
+/** Texto que arma el sistema con los datos de los tableros: es el contexto del modelo. */
+export function contenidoBase(agent, task) {
+  if (task.type === "reporte") return brain.buildReport(agent, task);
+  if (task.type === "investigacion") return brain.buildResearch(agent, task);
+  if (task.type === "email") return brain.buildEmail(agent, task, null).body;
+  return brain.actionPlan(agent, task);
+}
+
+function pieIA(task) {
+  const r = task.ia;
+  if (!r?.modo) return "";
+  if (r.modo !== "real") return `\n\n---\n\n_Generado por el sistema de reglas, sin modelo de IA: ${r.motivo}. Perfil previsto: ${r.perfilNombre} · ${r.flujoNombre}. Datos sintéticos._`;
+  const hechos = (task.inferencias || []).filter((i) => ["ok", "respaldo", "alerta"].includes(i.estado));
+  const pasos = hechos.map((i) => `${i.paso === "borrador" ? "escrito" : i.paso === "revision" ? "revisado" : i.paso === "correccion" ? "corregido" : "cifras verificadas"} por ${i.modelo}${i.proveedor !== "Sistema" ? ` (${i.proveedor})` : ""}`);
+  const sin = r.verificacion?.sinRespaldo?.length ? ` Cifras sin respaldo en los datos: ${r.verificacion.sinRespaldo.slice(0, 8).join(", ")}.` : "";
+  return `\n\n---\n\n_${pasos.join("; ")}. Perfil ${r.perfilNombre} · costo USD ${r.costoUSD.toFixed(4)}. Datos sintéticos.${sin}_`;
+}
+
+/** Genera los resultados de la tarea en forma sincrónica. `texto` es lo que escribió el modelo. */
+export function produce(task, texto = null) {
   const agent = byId[task.agentId];
   let deliverable = null;
   let email = null;
 
   if (task.type === "reporte" || task.type === "investigacion") {
-    const content = task.type === "reporte" ? brain.buildReport(agent, task) : brain.buildResearch(agent, task);
+    const content = (texto || (task.type === "reporte" ? brain.buildReport(agent, task) : brain.buildResearch(agent, task))) + pieIA(task);
     deliverable = { id: newId("dlv"), agentId: agent.id, taskId: task.id, kind: task.type, title: task.title, content, createdAt: now() };
     db.deliverables.unshift(deliverable);
     task.deliverableId = deliverable.id;
@@ -54,7 +83,9 @@ export function produce(task) {
 
   if (task.type === "email" || (deliverable && task.recipients.length)) {
     const recipients = task.recipients.length ? task.recipients : ["direccion@copahue.demo"];
-    const { subject, body } = brain.buildEmail(agent, task, deliverable);
+    const armado = brain.buildEmail(agent, task, deliverable);
+    const subject = armado.subject;
+    const body = task.type === "email" && texto ? texto : armado.body;
     email = { id: newId("eml"), agentId: agent.id, taskId: task.id, to: recipients, subject, body, deliverableId: deliverable?.id || null, status: "esperando_aprobacion", createdAt: now(), decidedAt: null };
     db.emails.unshift(email);
     task.emailId = email.id;
@@ -62,7 +93,7 @@ export function produce(task) {
   }
 
   if (task.type === "accion") {
-    task.plan = brain.actionPlan(agent, task);
+    task.plan = texto || brain.actionPlan(agent, task);
     step(task, "Acción preparada");
   }
 
@@ -90,11 +121,26 @@ export async function execute(taskId) {
   await wait(900);
   task.status = "en_curso";
   task.startedAt = now();
-  step(task, `Consultando ${byId[task.agentId].systems.slice(0, 3).join(", ")}`);
+  const agent = byId[task.agentId];
+  step(task, `Consultando ${agent.systems.slice(0, 3).join(", ")}`);
   changed("tasks");
-  await wait(2200 + Math.random() * 2500);
   try {
-    produce(task);
+    const contexto = contenidoBase(agent, task);
+    const plan = motor.resolver({ agentId: agent.id, type: task.type, instruction: task.instruction, recipients: task.recipients, ia: task.ia, rol: task.rol, datos: task.datos });
+    step(task, `Inteligencia: ${plan.perfil.nombre} · ${plan.flujo.nombre} (${plan.origen}; complejidad ${plan.complejidad.nivel})`);
+    changed("tasks");
+    const r = await motor.ejecutar({ agent, task, contexto, rol: task.rol });
+    task.ia = { perfilElegido: task.ia?.perfil || "auto", flujoElegido: task.ia?.flujo || "auto", ...r.resumen };
+    task.inferencias = r.inferencias;
+    for (const i of r.inferencias) {
+      if (i.estado === "simulado") continue;
+      step(task, `${{ borrador: "Borrador", revision: "Revisión", correccion: "Corrección", verificacion: "Verificación de cifras" }[i.paso] || i.paso}: ${i.modelo}${i.estado === "error" ? ` falló (${i.detalle})` : i.estado === "respaldo" ? " (respaldo)" : ""}${i.detalle && i.estado !== "error" ? ` · ${i.detalle}` : ""}`);
+    }
+    if (r.resumen.modo !== "real") {
+      step(task, `Sin modelo de IA: ${r.resumen.motivo}. Se usa el sistema de reglas`);
+      await wait(1500 + Math.random() * 1500);
+    }
+    produce(task, r.texto);
   } catch (e) {
     task.status = "fallida";
     task.finishedAt = now();

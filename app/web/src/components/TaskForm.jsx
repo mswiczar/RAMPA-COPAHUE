@@ -2,6 +2,7 @@ import { useState } from "react";
 import { api } from "../api.js";
 import { TYPES } from "../format.js";
 import CronField from "./CronField.jsx";
+import IAElegir from "./IAElegir.jsx";
 import { useSesion } from "../live.jsx";
 
 const HINTS = {
@@ -22,7 +23,8 @@ export default function TaskForm({ agents, agentId, initial, mode = "task", onDo
     recipients: (initial?.recipients || []).join(", "),
     when: mode === "schedule" ? "programar" : "ahora",
     cron: initial?.cron || "0 8 * * 1",
-    requiresApproval: initial?.requiresApproval ?? true
+    requiresApproval: initial?.requiresApproval ?? true,
+    ia: { perfil: initial?.ia?.perfil || "auto", flujo: initial?.ia?.flujo || "auto" }
   }));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -38,7 +40,8 @@ export default function TaskForm({ agents, agentId, initial, mode = "task", onDo
     setError(null);
     const body = {
       agentId: form.agentId, type: form.type, instruction: form.instruction,
-      recipients: showRecipients ? form.recipients : "", requiresApproval: form.requiresApproval
+      recipients: showRecipients ? form.recipients : "", requiresApproval: form.requiresApproval,
+      ia: form.ia
     };
     try {
       if (scheduling) {
@@ -113,6 +116,12 @@ export default function TaskForm({ agents, agentId, initial, mode = "task", onDo
       )}
 
       {scheduling && <CronField id="tf-cron" value={form.cron} onChange={set("cron")} />}
+
+      <IAElegir
+        agentId={form.agentId} type={form.type} instruction={form.instruction}
+        recipients={showRecipients ? form.recipients : ""} programada={scheduling}
+        value={form.ia} onChange={(ia) => setForm((f) => ({ ...f, ia }))}
+      />
 
       {(form.type === "email" || form.recipients.trim()) && showRecipients && (
         <label className="check">

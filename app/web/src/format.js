@@ -4,6 +4,14 @@ const TZ = "America/Argentina/Buenos_Aires";
 
 export const TYPES = { reporte: "Reporte", investigacion: "Investigación", email: "Email", accion: "Acción" };
 
+export const fmtUSD = (v, dec) => {
+  const d = dec ?? (v === 0 ? 2 : v < 0.01 ? 5 : v < 1 ? 4 : 2);
+  return `USD ${new Intl.NumberFormat("es-AR", { minimumFractionDigits: d, maximumFractionDigits: d }).format(v || 0)}`;
+};
+export const fmtTokens = (n) => (n >= 1e6 ? `${(n / 1e6).toLocaleString("es-AR", { maximumFractionDigits: 1 })} M` : n >= 1e3 ? `${(n / 1e3).toLocaleString("es-AR", { maximumFractionDigits: 1 })} k` : String(n || 0));
+export const PASOS = { borrador: "Borrador", revision: "Revisión", correccion: "Corrección", verificacion: "Verificación de cifras", prueba: "Prueba", "segunda-opinion": "Segunda opinión", comparacion: "Comparación", auditoria: "Auditoría cruzada", "contraste-auditoria": "Auditoría cruzada", "contraste-segunda-opinion": "Segunda opinión", "contraste-comparacion": "Comparación" };
+export const RAZONAMIENTO = { none: "Sin razonamiento", low: "Bajo", medium: "Medio", high: "Alto" };
+
 export const TASK_STATUS = {
   pendiente: ["Pendiente", "muted"],
   en_curso: ["En curso", "live"],

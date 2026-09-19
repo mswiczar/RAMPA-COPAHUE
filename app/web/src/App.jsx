@@ -12,6 +12,7 @@ import RDView from "./components/RDView.jsx";
 import OperacionesView from "./components/OperacionesView.jsx";
 import ProduccionView from "./components/ProduccionView.jsx";
 import AuditView from "./components/AuditView.jsx";
+import ModelosView from "./components/ModelosView.jsx";
 
 function useRoute() {
   const read = () => (window.location.hash.replace(/^#\/?/, "") || "sala").split("/");
@@ -35,7 +36,7 @@ export default function App({ user, permisos, onLogout }) {
   useEffect(() => {
     if (view === "sala" && !permisos.agentes.length && permisos.soluciones.length) window.location.hash = `#/${permisos.soluciones[0]}`;
   }, [view, permisos]);
-  const puedeVer = (id) => ["comercial", "rd", "operaciones", "produccion", "finanzas"].includes(id) ? permisos.soluciones.includes(id) : id === "auditoria" ? permisos.auditoria : id === "sala" ? permisos.agentes.length > 0 : true;
+  const puedeVer = (id) => ["comercial", "rd", "operaciones", "produccion", "finanzas"].includes(id) ? permisos.soluciones.includes(id) : id === "auditoria" || id === "modelos" ? permisos.auditoria : id === "sala" ? permisos.agentes.length > 0 : true;
 
   // En pantallas angostas el panel queda debajo de la sala: llevarlo a la vista al cambiar de agente.
   const firstAgent = useRef(true);
@@ -58,6 +59,7 @@ export default function App({ user, permisos, onLogout }) {
     ["programaciones", "Programaciones", null],
     ["bandeja", "Bandeja de salida", summary?.emailsPending],
     ["entregables", "Entregables", null],
+    ["modelos", "Modelos", null],
     ["auditoria", "Auditoría", null]
   ].filter(([id]) => puedeVer(id));
 
@@ -96,6 +98,7 @@ export default function App({ user, permisos, onLogout }) {
           </div>
         )}
         {view === "auditoria" && puedeVer("auditoria") && <AuditView />}
+        {view === "modelos" && puedeVer("modelos") && <ModelosView key={param} sub={param} />}
         {view === "comercial" && puedeVer("comercial") && <ComercialView key={param} sub={param} detalle={detalle} />}
         {view === "rd" && puedeVer("rd") && <RDView key={param} sub={param} />}
         {view === "operaciones" && puedeVer("operaciones") && <OperacionesView key={param} sub={param} />}

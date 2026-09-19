@@ -3,7 +3,7 @@ import { Cron } from "croner";
 import { db, newId, now, changed, logActivity, HttpError } from "./store.js";
 import { byId } from "./agents.js";
 import { TYPES } from "./brain.js";
-import { createTask, normRecipients } from "./worker.js";
+import { createTask, normRecipients, normIA } from "./worker.js";
 
 export const TZ = process.env.APP_TZ || "America/Argentina/Buenos_Aires";
 const jobs = new Map();
@@ -50,7 +50,8 @@ export function fire(id, manual = false) {
   if (!s) throw new HttpError(404, "No existe esa programación");
   const task = createTask({
     agentId: s.agentId, type: s.type, title: s.name, instruction: s.instruction,
-    recipients: s.recipients, source: "programacion", scheduleId: s.id, requiresApproval: s.requiresApproval
+    recipients: s.recipients, source: "programacion", scheduleId: s.id, requiresApproval: s.requiresApproval,
+    ia: s.ia ? { ...s.ia, origen: "definido en la programación" } : null
   });
   s.lastRunAt = now();
   s.runs = (s.runs || 0) + 1;
@@ -72,6 +73,7 @@ export function create(input) {
     cron: String(input.cron || "").trim(),
     requiresApproval: input.requiresApproval !== false,
     enabled: input.enabled !== false,
+    ia: normIA(input.ia),
     createdAt: now(), lastRunAt: null, nextRunAt: null, runs: 0, lastTaskId: null
   };
   assertValid(s);
@@ -90,6 +92,7 @@ export function update(id, patch) {
     if (patch[k] !== undefined) next[k] = typeof patch[k] === "string" ? patch[k].trim() : patch[k];
   }
   if (patch.recipients !== undefined) next.recipients = normRecipients(patch.recipients);
+  if (patch.ia !== undefined) next.ia = normIA(patch.ia);
   assertValid(next);
   Object.assign(s, next);
   arm(s);

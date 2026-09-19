@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { db, bus, load, newId, now, changed, HttpError } from "./store.js";
 import { ALL, byId } from "./agents.js";
 import * as brain from "./brain.js";
-import { createTask, decide, resume } from "./worker.js";
+import { createTask, decide, resume, contenidoBase } from "./worker.js";
 import * as scheduler from "./scheduler.js";
 import * as finanzas from "./solutions/finanzas.js";
 import * as comercial from "./solutions/comercial.js";
@@ -17,6 +17,9 @@ import * as operaciones from "./solutions/operaciones.js";
 import * as produccion from "./solutions/produccion.js";
 import * as consultas from "./solutions/consultas.js";
 import * as pdv from "./solutions/pdv.js";
+import * as catIA from "./ia/catalogo.js";
+import * as motor from "./ia/motor.js";
+import { listarModelos, completar } from "./ia/cliente.js";
 import { seed } from "./seed.js";
 
 const PORT = Number(process.env.PORT || 8080);
@@ -119,7 +122,7 @@ app.post("/api/agents/:id/messages", wrap(async (req) => {
     reply.content = `${bloqueo} Pedíselo a alguien de Dirección.`;
   } else if (intent?.kind === "task") {
     const { agentId, type, instruction, recipients } = intent;
-    const task = createTask({ agentId, type, instruction, recipients, pedidoPor: req.user.nombre });
+    const task = createTask({ agentId, type, instruction, recipients, pedidoPor: req.user.nombre, rol: req.user.rol });
     audit.registrar(req, "encargó", byId[agentId].name, task.title);
     const who = agentId !== agent.id ? `Se lo encargué al **${byId[agentId].name}**. ` : "Lo tomo. ";
     const approval = type === "accion" || recipients.length || type === "email" ? " Antes de enviar o ejecutar te voy a pedir aprobación." : "";
@@ -154,10 +157,58 @@ app.get("/api/tasks/:id", wrap((req) => {
 }));
 app.post("/api/tasks", wrap((req, res) => {
   agenteVisible(req, req.body.agentId);
-  const task = createTask({ ...req.body, source: "ceo", pedidoPor: req.user.nombre });
-  audit.registrar(req, "encargó", byId[task.agentId].name, task.title);
+  const perfilPedido = req.body.ia?.perfil && catIA.perfil(req.body.ia.perfil);
+  exigir(!perfilPedido || !perfilPedido.roles?.length || perfilPedido.roles.includes(req.user.rol), req, "intentó usar el perfil", perfilPedido?.nombre, `El perfil ${perfilPedido?.nombre} no está habilitado para tu rol`);
+  const task = createTask({ ...req.body, ia: { perfil: req.body.ia?.perfil, flujo: req.body.ia?.flujo }, source: "ceo", pedidoPor: req.user.nombre, rol: req.user.rol });
+  audit.registrar(req, "encargó", byId[task.agentId].name, `${task.title}${task.ia.perfil !== "auto" || task.ia.flujo !== "auto" ? ` · IA: ${task.ia.perfil}/${task.ia.flujo}` : ""}`);
   res.status(201);
   return task;
+}));
+
+/** Texto que produjo una tarea: el entregable, el mail o la acción propuesta. */
+function textoDeTarea(t) {
+  const d = t.deliverableId && db.deliverables.find((x) => x.id === t.deliverableId);
+  if (d) return d.content.replace(/\n\n---\n\n_[^]*$/, "");
+  const e = t.emailId && db.emails.find((x) => x.id === t.emailId);
+  if (e && t.type === "email") return e.body;
+  return t.plan || null;
+}
+
+// Contraste: el mismo pedido a otro modelo, o el resultado a otro agente para que lo audite.
+app.post("/api/tasks/:id/contraste", wrap((req, res) => {
+  const t = db.tasks.find((x) => x.id === req.params.id);
+  if (!t) throw new HttpError(404, "No existe esa tarea");
+  const origen = agenteVisible(req, t.agentId);
+  const modo = req.body?.modo === "auditar" ? "auditar" : "mismo_pedido";
+  const auditor = modo === "auditar" ? agenteVisible(req, req.body?.agentId) : null;
+  if (auditor && auditor.id === origen.id) throw new HttpError(400, "Elegí un agente distinto del que hizo el trabajo");
+  const textoA = textoDeTarea(t);
+  if (!textoA) throw new HttpError(409, "La tarea todavía no tiene un resultado para contrastar");
+  const perfilPedido = req.body?.perfil && catIA.perfil(req.body.perfil);
+  exigir(!perfilPedido || !perfilPedido.roles?.length || perfilPedido.roles.includes(req.user.rol), req, "intentó usar el perfil", perfilPedido?.nombre, `El perfil ${perfilPedido?.nombre} no está habilitado para tu rol`);
+
+  const c = {
+    id: newId("ctr"), modo, estado: "en_curso", ts: now(), pedidoPor: req.user.nombre,
+    auditor: auditor ? { id: auditor.id, nombre: auditor.name } : null, perfil: perfilPedido?.nombre || "Automático",
+    resultado: null, textoB: null, inferencias: [], costoUSD: 0
+  };
+  (t.contrastes ||= []).unshift(c);
+  t.log.push({ ts: now(), text: modo === "auditar" ? `${req.user.nombre} pidió que el ${auditor.name} audite el resultado` : `${req.user.nombre} pidió una segunda opinión con ${c.perfil}` });
+  audit.registrar(req, modo === "auditar" ? "pidió auditoría cruzada" : "pidió segunda opinión", t.title, modo === "auditar" ? `Audita: ${auditor.name}` : `Perfil: ${c.perfil}`);
+  changed("tasks");
+
+  const contextoA = contenidoBase(origen, t);
+  const contextoAuditor = auditor ? brain.buildReport(auditor, { ...t, agentId: auditor.id }) : null;
+  motor.contrastar({ modo, task: t, agenteOrigen: origen, agenteAuditor: auditor, perfilId: req.body?.perfil, textoA, contextoA, contextoAuditor, rol: req.user.rol })
+    .then((r) => {
+      Object.assign(c, { estado: "listo", resultado: r.resultado, textoB: r.textoB, textoA, inferencias: r.inferencias, simulado: r.simulado, perfil: r.perfil, costoUSD: r.inferencias.reduce((a, x) => a + (x.costoUSD || 0), 0) });
+      t.log.push({ ts: now(), text: `${modo === "auditar" ? `Auditoría del ${auditor.name}` : "Segunda opinión"}: ${r.resultado.veredicto}${r.simulado ? " (simulado, sin modelo)" : ""}` });
+      audit.registrar({ user: { usuario: "sistema", nombre: "Sala 24/7", rolLabel: "Sistema" }, ip: null }, modo === "auditar" ? "auditoría cruzada terminada" : "segunda opinión terminada", t.title, `${r.resultado.veredicto} · USD ${c.costoUSD.toFixed(4)}`);
+    })
+    .catch((e) => Object.assign(c, { estado: "error", resultado: { veredicto: "error", resumen: e.message } }))
+    .finally(() => changed("tasks"));
+  res.status(202);
+  return c;
 }));
 
 function decidir(req, id, aprobar) {
@@ -209,6 +260,208 @@ app.post("/api/schedules/:id/run", wrap((req) => {
   return scheduler.fire(req.params.id, true);
 }));
 app.get("/api/cron/preview", wrap((req) => ({ next: scheduler.nextRun(String(req.query.expr || "")) })));
+
+/* ---------- Inteligencia: modelos, perfiles y consumo ---------- */
+
+const soloDireccion = (req, accion, recurso) => exigir(users.puede(req.user, "auditoria"), req, accion, recurso, "La configuración de modelos la administra Dirección");
+
+const perfilPublico = (p) => {
+  const m = catIA.modelo(p.principal);
+  const rv = catIA.modelo(p.revisor);
+  return {
+    id: p.id, nombre: p.nombre, descripcion: p.descripcion, razonamiento: p.razonamiento, roles: p.roles,
+    principal: m ? `${m.nombre} · ${catIA.proveedor(m.proveedor)?.nombre}` : "Sin modelo",
+    revisor: rv ? `${rv.nombre} · ${catIA.proveedor(rv.proveedor)?.nombre}` : null,
+    listo: [p.principal, ...(p.respaldo || [])].some((id) => catIA.modeloListo(catIA.modelo(id)).listo)
+  };
+};
+
+app.get("/api/ia/opciones", wrap((req) => {
+  const c = catIA.cfg();
+  return {
+    perfiles: c.perfiles.filter((p) => !p.roles?.length || p.roles.includes(req.user.rol)).map(perfilPublico),
+    flujos: Object.values(catIA.FLUJOS).map(({ id, nombre, detalle }) => ({ id, nombre, detalle })),
+    flujoPorNivel: c.flujoPorNivel
+  };
+}));
+
+const modeloPublico = (m) => m && { id: m.id, nombre: m.nombre, proveedor: catIA.proveedor(m.proveedor)?.nombre, ...catIA.modeloListo(m), precio: catIA.precio(m) };
+
+app.post("/api/ia/recomendar", wrap((req) => {
+  const b = req.body || {};
+  if (!byId[b.agentId]) throw new HttpError(400, "Elegí un agente");
+  const plan = motor.resolver({ agentId: b.agentId, type: b.type || "reporte", instruction: b.instruction || "", recipients: String(b.recipients || "").split(/[,;\s]+/).filter(Boolean), ia: b.ia || {}, rol: req.user.rol });
+  const listo = plan.cadena.some((m) => catIA.modeloListo(m).listo);
+  return {
+    complejidad: plan.complejidad, recomendado: plan.recomendado, origen: plan.origen,
+    perfil: perfilPublico(plan.perfil), flujo: plan.flujo,
+    cadena: plan.cadena.map(modeloPublico), revisor: modeloPublico(plan.revisor),
+    estimacion: plan.estimacion,
+    modo: listo ? "real" : "simulado",
+    aviso: listo ? null : "Ningún modelo del perfil tiene clave cargada: la tarea sale con el sistema de reglas y el flujo queda simulado."
+  };
+}));
+
+app.get("/api/ia/admin", wrap((req) => {
+  soloDireccion(req, "intentó ver", "Configuración de modelos");
+  const c = catIA.cfg();
+  const mes = new Date().toISOString().slice(0, 7);
+  const delMes = c.consumo.filter((x) => x.ts.startsWith(mes) && !x.simulado);
+  const agrupar = (campo, nombre) => Object.values(delMes.reduce((acc, x) => {
+    const k = x[campo] || "—";
+    acc[k] ||= { id: k, nombre: nombre(k), costoUSD: 0, tokens: 0, llamadas: 0 };
+    acc[k].costoUSD += x.costoUSD || 0; acc[k].tokens += (x.tokensIn || 0) + (x.tokensOut || 0); acc[k].llamadas++;
+    return acc;
+  }, {})).sort((a, b) => b.costoUSD - a.costoUSD);
+  const gastado = catIA.gastoDelMes();
+  const dia = new Date().getUTCDate();
+  const diasMes = new Date(new Date().getUTCFullYear(), new Date().getUTCMonth() + 1, 0).getDate();
+  return {
+    proveedores: c.proveedores.map((p) => ({ ...p, estado: catIA.estadoProveedor(p), modelos: c.modelos.filter((m) => m.proveedor === p.id).length })),
+    modelos: c.modelos.map((m) => ({ ...m, estado: catIA.modeloListo(m), proveedorNombre: catIA.proveedor(m.proveedor)?.nombre })),
+    perfiles: c.perfiles.map((p) => ({ ...p, publico: perfilPublico(p) })),
+    asignaciones: c.asignaciones, flujoPorNivel: c.flujoPorNivel, flujos: Object.values(catIA.FLUJOS),
+    tiposTarea: catIA.TIPOS_TAREA, tipos: catIA.TIPOS, roles: Object.entries(users.ROLES).map(([id, r]) => ({ id, label: r.label })),
+    agentes: ALL.map((a) => ({ id: a.id, nombre: a.name })),
+    topes: c.topes,
+    consumo: {
+      gastadoUSD: gastado, proyeccionUSD: dia ? (gastado / dia) * diasMes : 0,
+      diasMes, dia,
+      llamadas: delMes.length,
+      tokens: delMes.reduce((a, x) => a + (x.tokensIn || 0) + (x.tokensOut || 0), 0),
+      tokensIn: delMes.reduce((a, x) => a + (x.tokensIn || 0), 0),
+      tokensOut: delMes.reduce((a, x) => a + (x.tokensOut || 0), 0),
+      errores: delMes.filter((x) => x.estado === "error").length,
+      respaldos: delMes.filter((x) => x.estado === "respaldo").length,
+      tareas: new Set(delMes.map((x) => x.taskId).filter(Boolean)).size,
+      porDia: Array.from({ length: diasMes }, (_, i) => {
+        const d = `${mes}-${String(i + 1).padStart(2, "0")}`;
+        const del = delMes.filter((x) => x.ts.startsWith(d));
+        return { dia: i + 1, costoUSD: del.reduce((a, x) => a + (x.costoUSD || 0), 0), llamadas: del.length, futuro: i + 1 > dia };
+      }),
+      porPaso: agrupar("paso", (k) => ({ borrador: "Borrador", revision: "Revisión", correccion: "Corrección", prueba: "Pruebas de conexión", "contraste-auditoria": "Auditoría cruzada", "contraste-segunda-opinion": "Segunda opinión", "contraste-comparacion": "Comparación de respuestas" }[k] || k)),
+      porProveedor: agrupar("proveedor", (k) => catIA.proveedor(k)?.nombre || k),
+      porModelo: agrupar("modelo", (k) => catIA.modelo(k)?.nombre || k),
+      porAgente: agrupar("agentId", (k) => byId[k]?.name || (k === "—" ? "Pruebas" : k)),
+      // Tareas que salieron sin modelo (sin clave o por tope): cuánto habrían costado.
+      simuladas: db.tasks.filter((t) => t.ia?.modo && t.ia.modo !== "real" && (t.finishedAt || t.createdAt || "").startsWith(mes)).length,
+      ultimas: delMes.slice(0, 60).map((x) => ({ ...x, modeloNombre: catIA.modelo(x.modelo)?.nombre || x.modelo, agente: byId[x.agentId]?.short || x.agentId }))
+    },
+    verificado: catIA.VERIFICADO
+  };
+}));
+
+const cambioIA = (accion, recurso, detalle) => (req) => audit.registrar(req, accion, recurso, detalle);
+
+app.put("/api/ia/proveedores/:id", wrap((req) => {
+  soloDireccion(req, "intentó modificar", "Proveedor de IA");
+  const p = catIA.guardarProveedor(req.params.id, req.body || {});
+  cambioIA("configuró proveedor de IA", p.nombre, `${p.habilitado ? "habilitado" : "deshabilitado"} · ${p.baseUrl}${p.aptoDatosReales ? " · apto datos reales" : ""}`)(req);
+  return { ...p, estado: catIA.estadoProveedor(p) };
+}));
+app.post("/api/ia/proveedores", wrap((req, res) => {
+  soloDireccion(req, "intentó crear", "Proveedor de IA");
+  const p = catIA.guardarProveedor("__nuevo__", req.body || {});
+  cambioIA("agregó proveedor de IA", p.nombre, p.baseUrl)(req);
+  res.status(201);
+  return p;
+}));
+app.post("/api/ia/proveedores/:id/probar", wrap(async (req) => {
+  soloDireccion(req, "intentó probar", "Proveedor de IA");
+  const p = catIA.proveedor(req.params.id);
+  if (!p) throw new HttpError(404, "No existe ese proveedor");
+  const e = catIA.estadoProveedor({ ...p, habilitado: true });
+  if (!e.listo) return { ok: false, mensaje: e.motivo };
+  try {
+    const lista = await listarModelos(p);
+    return { ok: true, mensaje: `Conexión correcta: ${lista.length} modelos disponibles` };
+  } catch (err) {
+    return { ok: false, mensaje: err.message };
+  }
+}));
+app.post("/api/ia/proveedores/:id/sincronizar", wrap(async (req) => {
+  soloDireccion(req, "intentó sincronizar", "Proveedor de IA");
+  const p = catIA.proveedor(req.params.id);
+  if (!p) throw new HttpError(404, "No existe ese proveedor");
+  const e = catIA.estadoProveedor({ ...p, habilitado: true });
+  if (!e.listo) throw new HttpError(400, e.motivo);
+  const remotos = await listarModelos(p).catch((err) => { throw new HttpError(502, err.message); });
+  const c = catIA.cfg();
+  let vinculados = 0;
+  let nuevos = 0;
+  for (const r of remotos.slice(0, 400)) {
+    const s = catIA.slug(r.id);
+    const existente = c.modelos.find((m) => m.proveedor === p.id && (m.modelo === r.id || (!m.modelo && (s === catIA.slug(m.nombre) || s.endsWith(catIA.slug(m.nombre)) || s.includes(catIA.slug(m.nombre))))));
+    if (existente) {
+      if (!existente.modelo) { existente.modelo = r.id; vinculados++; }
+      if (r.contexto) existente.contexto = r.contexto;
+      continue;
+    }
+    // Los modelos nuevos entran deshabilitados: Dirección revisa el precio y los habilita.
+    c.modelos.push({
+      id: `${p.id}:${s}`, proveedor: p.id, modelo: r.id, nombre: r.nombre, contexto: r.contexto,
+      entrada: r.entrada ?? 0, salida: r.salida ?? 0, razona: false, habilitado: false,
+      fuentePrecio: r.entrada != null ? `API de ${p.nombre}` : "Sin precio: cargarlo a mano", verificado: new Date().toISOString().slice(0, 10)
+    });
+    nuevos++;
+  }
+  changed("ia");
+  audit.registrar(req, "sincronizó modelos", p.nombre, `${vinculados} vinculados, ${nuevos} nuevos`);
+  return { vinculados, nuevos, total: remotos.length };
+}));
+
+app.put("/api/ia/modelos/:id", wrap((req) => {
+  soloDireccion(req, "intentó modificar", "Modelo de IA");
+  const m = catIA.guardarModelo(req.params.id, req.body || {});
+  audit.registrar(req, "configuró modelo de IA", m.nombre, `${m.habilitado ? "habilitado" : "deshabilitado"} · USD ${m.entrada}/${m.salida} por millón`);
+  return m;
+}));
+app.post("/api/ia/modelos", wrap((req, res) => {
+  soloDireccion(req, "intentó crear", "Modelo de IA");
+  const m = catIA.guardarModelo("__nuevo__", req.body || {});
+  audit.registrar(req, "agregó modelo de IA", m.nombre, m.proveedor);
+  res.status(201);
+  return m;
+}));
+app.post("/api/ia/modelos/:id/probar", wrap(async (req) => {
+  soloDireccion(req, "intentó probar", "Modelo de IA");
+  const m = catIA.modelo(req.params.id);
+  const e = catIA.modeloListo(m);
+  if (!e.listo) return { ok: false, mensaje: e.motivo };
+  try {
+    const r = await completar(m, [{ role: "user", content: "Respondé solo con la palabra: listo" }], { maxTokens: 20 });
+    catIA.registrarConsumo({ ts: now(), taskId: null, agentId: null, paso: "prueba", proveedor: m.proveedor, modelo: m.id, tokensIn: r.tokensIn, tokensOut: r.tokensOut, costoUSD: r.costoUSD, estado: "ok", simulado: false });
+    return { ok: true, mensaje: `Respondió «${r.texto.slice(0, 40)}» en ${(r.ms / 1000).toFixed(1)} s · USD ${r.costoUSD.toFixed(6)}` };
+  } catch (err) {
+    return { ok: false, mensaje: err.message };
+  }
+}));
+
+app.put("/api/ia/perfiles/:id", wrap((req) => {
+  soloDireccion(req, "intentó modificar", "Perfil de IA");
+  const p = catIA.guardarPerfil(req.params.id, req.body || {});
+  audit.registrar(req, "configuró perfil de IA", p.nombre, `${p.principal || "sin modelo"} · revisor ${p.revisor || "—"}`);
+  return p;
+}));
+app.post("/api/ia/perfiles", wrap((req, res) => {
+  soloDireccion(req, "intentó crear", "Perfil de IA");
+  const p = catIA.guardarPerfil("__nuevo__", req.body || {});
+  audit.registrar(req, "agregó perfil de IA", p.nombre);
+  res.status(201);
+  return p;
+}));
+app.put("/api/ia/asignaciones", wrap((req) => {
+  soloDireccion(req, "intentó modificar", "Asignaciones de IA");
+  catIA.guardarAsignaciones(req.body?.asignaciones, req.body?.flujoPorNivel);
+  audit.registrar(req, "cambió asignaciones de IA", "Modelos por agente y tarea");
+  return { ok: true };
+}));
+app.put("/api/ia/topes", wrap((req) => {
+  soloDireccion(req, "intentó modificar", "Topes de IA");
+  catIA.guardarTopes(req.body || {});
+  audit.registrar(req, "cambió topes de gasto de IA", "Consumo", `USD ${catIA.cfg().topes.mensualUSD} por mes`);
+  return catIA.cfg().topes;
+}));
 
 /* ---------- Geografía (mapas) ---------- */
 
@@ -389,6 +642,7 @@ app.use((err, req, res, next) => {
 });
 
 const fresh = load();
+catIA.asegurar();
 scheduler.init();
 if (fresh) seed();
 resume();

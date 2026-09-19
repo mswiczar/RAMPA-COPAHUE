@@ -27,6 +27,20 @@ Todos los datos de negocio de la app son **simulados**. No inventar datos presen
 | TLS | Let's Encrypt propio: `/etc/letsencrypt/live/copahue.moshito.work` (webroot `/var/www/acme`, se renueva con certbot). Cloudflare está en Full (strict), así que cada subdominio necesita su propio certificado |
 | Logs | `journalctl -u copahue-sala`, `/var/log/nginx/copahue-moshito-work.*.log` |
 
+### Modelos de IA y claves
+
+La pantalla **Modelos** (solo Dirección) administra proveedores, catálogo con precios, perfiles, asignaciones por agente y tipo de tarea, topes y el dashboard de consumo. La configuración vive en `db.json` (`ia`); las claves **no**: cada proveedor indica en qué variable de entorno está la suya.
+
+Para cargar una clave, en el servidor:
+
+```bash
+echo 'DIGITALOCEAN_INFERENCE_KEY=...' >> /etc/copahue/copahue.env   # clave de acceso a modelos de DigitalOcean
+echo 'DEEPSEEK_API_KEY=...' >> /etc/copahue/copahue.env
+systemctl restart copahue-sala
+```
+
+Después, en Modelos › Proveedores: «Probar conexión» y «Traer modelos» (completa los ids de DigitalOcean). Sin clave, las tareas salen con el sistema de reglas y el flujo queda marcado como simulado. Todos los proveedores usan hoy el formato compatible con OpenAI (`/chat/completions`); un servidor propio (Ollama, vLLM) se agrega desde la misma pantalla.
+
 ### Desplegar una nueva versión
 
 Desde la raíz del repo, en Git Bash:

@@ -4,6 +4,7 @@ import { useFetch, useSesion } from "../live.jsx";
 import { TYPES, TASK_STATUS, fmtDate, fmtRelative } from "../format.js";
 import { TaskStatus, AgentTag } from "./Status.jsx";
 import TaskForm from "./TaskForm.jsx";
+import { InferenciasTarea, Contraste } from "./TareaIA.jsx";
 
 export default function TasksView({ agents, focus }) {
   const [agentId, setAgentId] = useState("");
@@ -102,6 +103,8 @@ function TaskRow({ task: t, agents, open, onToggle }) {
               </ol>
             </div>
           </div>
+          <InferenciasTarea task={t} />
+          <Contraste task={t} agents={agents} />
         </div>
       )}
     </li>
