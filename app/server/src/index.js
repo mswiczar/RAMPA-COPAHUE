@@ -18,6 +18,7 @@ import * as produccion from "./solutions/produccion.js";
 import * as consultas from "./solutions/consultas.js";
 import * as pdv from "./solutions/pdv.js";
 import * as catIA from "./ia/catalogo.js";
+import * as ayuda from "./ayuda.js";
 import * as motor from "./ia/motor.js";
 import { listarModelos, completar } from "./ia/cliente.js";
 import { seed } from "./seed.js";
@@ -461,6 +462,38 @@ app.put("/api/ia/topes", wrap((req) => {
   catIA.guardarTopes(req.body || {});
   audit.registrar(req, "cambió topes de gasto de IA", "Consumo", `USD ${catIA.cfg().topes.mensualUSD} por mes`);
   return catIA.cfg().topes;
+}));
+
+/* ---------- Ayuda: sitio, popup, agente y guías de primera vez ---------- */
+
+app.get("/api/ayuda/indice", wrap(() => ({ grupos: ayuda.GRUPOS, paginas: ayuda.indice() })));
+app.get("/api/ayuda/pagina/:id", wrap((req) => {
+  const p = ayuda.pagina(req.params.id);
+  if (!p) throw new HttpError(404, "No existe esa página de ayuda");
+  return p;
+}));
+app.get("/api/ayuda/para", wrap((req) => ({ id: ayuda.paraRuta(req.query.ruta) })));
+app.get("/api/ayuda/buscar", wrap((req) => ayuda.buscar(String(req.query.q || "").slice(0, 200)).map(({ texto, ...r }) => r)));
+app.post("/api/ayuda/preguntar", wrap(async (req) => {
+  const pregunta = String(req.body?.pregunta || "").trim().slice(0, 500);
+  if (!pregunta) throw new HttpError(400, "Escribí tu pregunta");
+  const r = await ayuda.responder({ pregunta, ruta: req.body?.ruta ? String(req.body.ruta).slice(0, 120) : null, usuario: req.user.usuario, rol: req.user.rolLabel });
+  audit.registrar(req, "preguntó a la ayuda", r.fuentes[0]?.titulo || "Sin respuesta", pregunta);
+  return r;
+}));
+app.get("/api/ayuda/img/:archivo", (req, res) => {
+  const archivo = path.basename(req.params.archivo);
+  if (!/^[a-z0-9-]+\.(png|jpg)$/.test(archivo)) return res.status(404).end();
+  res.set("Cache-Control", "private, max-age=3600");
+  res.sendFile(path.join(ayuda.DIR_CAPTURAS, archivo), (err) => err && !res.headersSent && res.status(404).end());
+});
+app.get("/api/ayuda/guias", wrap((req) => ({ vistas: ayuda.guiasVistas(req.user.usuario) })));
+app.get("/api/ayuda/guia/:id", wrap((req) => ({ id: req.params.id, pasos: ayuda.guia(req.params.id) || [] })));
+app.post("/api/ayuda/guias/:id", wrap((req) => { ayuda.marcarGuia(req.user.usuario, req.params.id); return { ok: true }; }));
+app.delete("/api/ayuda/guias", wrap((req) => { ayuda.reiniciarGuias(req.user.usuario); return { ok: true }; }));
+app.get("/api/ayuda/sin-respuesta", wrap((req) => {
+  exigir(users.puede(req.user, "auditoria"), req, "intentó ver", "Preguntas sin respuesta", "Lo ve Dirección");
+  return (db.ayudaSinRespuesta || []).slice(0, 200);
 }));
 
 /* ---------- Geografía (mapas) ---------- */

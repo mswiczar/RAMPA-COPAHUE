@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import Login from "./components/Login.jsx";
+import AyudaSitio from "./ayuda/AyudaSitio.jsx";
 import { LiveProvider, SesionContext } from "./live.jsx";
 import { api } from "./api.js";
 import "./styles.css";
@@ -28,7 +29,9 @@ function AuthGate() {
   return (
     <SesionContext.Provider value={{ user: session.user, permisos: session.permisos }}>
       <LiveProvider>
-        <App user={session.user} permisos={session.permisos} onLogout={logout} />
+        {window.location.pathname.startsWith("/ayuda")
+          ? <AyudaSitio onLogout={logout} />
+          : <App user={session.user} permisos={session.permisos} onLogout={logout} />}
       </LiveProvider>
     </SesionContext.Provider>
   );

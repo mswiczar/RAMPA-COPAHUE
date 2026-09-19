@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { marcarRuta } from "../ayuda/util.js";
 import { useFetch } from "../live.jsx";
 import { BarsVsTarget, RankBars, fmtM, fmtPct } from "./charts.jsx";
 
@@ -26,7 +27,7 @@ export default function ProduccionView({ sub }) {
 
       <div className="tabs solution-tabs" role="tablist">
         {TABS.map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>{label}</button>
+          <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => { setTab(id); marcarRuta(id === "tablero" ? "produccion" : `produccion/${id}`); }}>{label}</button>
         ))}
       </div>
 

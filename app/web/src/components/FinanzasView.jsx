@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { marcarRuta } from "../ayuda/util.js";
 import { api } from "../api.js";
 import { useFetch } from "../live.jsx";
 import { BarsVsTarget, CashLine, RankBars, Waterfall, fmtM, fmtPct } from "./charts.jsx";
@@ -35,7 +36,7 @@ export default function FinanzasView({ sub }) {
 
       <div className="tabs solution-tabs" role="tablist">
         {TABS.map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>{label}</button>
+          <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => { setTab(id); marcarRuta(id === "tablero" ? "finanzas" : `finanzas/${id}`); }}>{label}</button>
         ))}
       </div>
 

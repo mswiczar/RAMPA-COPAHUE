@@ -1,0 +1,15 @@
+{
+  "comentario": "Todas las pantallas y pestañas de la app. Cada una tiene que tener su página de ayuda (campo ruta). Si se agrega una pantalla, se agrega acá y verificar.mjs exige documentarla.",
+  "rutas": [
+    "login", "sala",
+    "comercial", "comercial/pipeline", "comercial/funnel", "comercial/forecast", "comercial/clientes", "comercial/ia",
+    "comercial/pdv", "comercial/pdv/misiones", "comercial/pdv/evidencia", "comercial/pdv/mercado", "comercial/pdv/calidad",
+    "rd", "rd/proyectos", "rd/radar", "rd/competencia", "rd/decision",
+    "operaciones", "operaciones/stock", "operaciones/canal", "operaciones/logistica",
+    "produccion", "produccion/plan", "produccion/plantas", "produccion/decidir",
+    "finanzas", "finanzas/pnl", "finanzas/analisis", "finanzas/escenarios",
+    "tareas", "programaciones", "bandeja", "entregables",
+    "modelos", "modelos/proveedores", "modelos/catalogo", "modelos/perfiles", "modelos/asignaciones", "modelos/como",
+    "auditoria", "auditoria/permisos"
+  ]
+}

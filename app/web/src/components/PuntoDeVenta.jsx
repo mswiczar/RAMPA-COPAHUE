@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useFetch, useSesion } from "../live.jsx";
 import { api } from "../api.js";
+import { marcarRuta } from "../ayuda/util.js";
 import { Heatmap, Lineas, RankBars, DIVERGENTE, SECUENCIAL, SERIES, escala, fmtM, fmtPct } from "./charts.jsx";
 
 const ESTADO_LABEL = { conciliado: "Conciliado", operativo: "Operativo", proyectado: "Proyectado", estimado: "Estimado" };
@@ -35,7 +36,7 @@ export default function PuntoDeVenta({ inicial }) {
         <div className="segmented" role="tablist" aria-label="Secciones de la auditoría">
           {SECCIONES.map(([id, label]) => (
             <label key={id} className={seccion === id ? "on" : ""}>
-              <input type="radio" name="pdv-seccion" value={id} checked={seccion === id} onChange={() => setSeccion(id)} />{label}
+              <input type="radio" name="pdv-seccion" value={id} checked={seccion === id} onChange={() => { setSeccion(id); marcarRuta(id === "resultados" ? "comercial/pdv" : `comercial/pdv/${id}`); }} />{label}
             </label>
           ))}
         </div>

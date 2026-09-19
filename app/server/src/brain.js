@@ -2,6 +2,7 @@
 // a partir de los datos simulados. Se reemplaza por Claude + sistemas reales.
 import { AGENTS, CEO, byId, PERIODO, MAIL_ALIASES } from "./agents.js";
 import * as consultas from "./solutions/consultas.js";
+import * as ayuda from "./ayuda.js";
 
 export const TYPES = { reporte: "Reporte", investigacion: "Investigación", email: "Email", accion: "Acción" };
 
@@ -30,6 +31,11 @@ function bestAnswers(agent, text, n = 1) {
 const COMMAND = /^(?:(?:por favor|che|necesito que|quiero que|podes|podrias)\s+)*(arma|armame|armen|prepara|preparame|genera|generame|envia|enviale|enviame|manda|mandale|mandame|investiga|analiza|hace|haceme|redacta|programa|programame|crea|pedile|decile|avisale|avisa|emiti|emitir|posterga|postergar|releva|busca|compara|calcula|actualiza|revisa|revisame|agenda|agendame|recordame|todos|todas|cada)\b/;
 
 export function chat(agent, text, ctx = {}) {
+  // «¿Cómo programo un reporte?» es una duda de uso, no un encargo: se responde con la ayuda.
+  if (ayuda.esPreguntaDeUso(text)) {
+    const r = ayuda.respuestaSala(text);
+    if (r) return { text: r };
+  }
   const t = norm(text).trim();
   const schedule = parseSchedule(t);
   if (COMMAND.test(t) || schedule) {
@@ -42,6 +48,11 @@ export function chat(agent, text, ctx = {}) {
 }
 
 export function answer(agent, text, ctx = {}) {
+  // Las dudas de uso del sistema se responden con la documentación, desde cualquier agente.
+  if (ayuda.esPreguntaDeUso(text)) {
+    const r = ayuda.respuestaSala(text);
+    if (r) return r;
+  }
   // Primero, la solución del agente: datos vivos del tablero, filtrados por los permisos de quien pregunta.
   const delTablero = consultas.responder(agent.id, text, ctx);
   if (delTablero) return delTablero;

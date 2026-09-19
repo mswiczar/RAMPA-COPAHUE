@@ -17,6 +17,8 @@ echo "→ Instalando, compilando y reiniciando (solo copahue-sala)"
 ssh "$HOST" 'set -e
   tar -xzf /tmp/copahue-app.tgz -C /srv/copahue/app && rm /tmp/copahue-app.tgz
   cd /srv/copahue/app
+  # La documentación es parte del producto: si falta la ayuda de una pantalla, no se despliega.
+  node ayuda/verificar.mjs
   npm --prefix server install --omit=dev --no-audit --no-fund >/dev/null
   npm --prefix web install --no-audit --no-fund >/dev/null
   npm --prefix web run build 2>&1 | tail -1

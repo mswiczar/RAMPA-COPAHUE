@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { marcarRuta } from "../ayuda/util.js";
 import { useFetch } from "../live.jsx";
 import { RankBars, Heatmap, DIVERGENTE, escala, fmtM, fmtPct } from "./charts.jsx";
 import MapaArgentina from "./MapaArgentina.jsx";
@@ -28,7 +29,7 @@ export default function ComercialView({ sub, detalle }) {
 
       <div className="tabs solution-tabs" role="tablist">
         {TABS.map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>{label}</button>
+          <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => { setTab(id); marcarRuta(id === "tablero" ? "comercial" : `comercial/${id}`); }}>{label}</button>
         ))}
       </div>
 

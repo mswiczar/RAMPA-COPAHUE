@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { marcarRuta } from "../ayuda/util.js";
 import { api } from "../api.js";
 import { useFetch } from "../live.jsx";
 import { RankBars } from "./charts.jsx";
@@ -21,7 +22,7 @@ export default function ModelosView({ sub }) {
         </div>
       </div>
       <div className="tabs solution-tabs" role="tablist">
-        {TABS.map(([id, label]) => <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>{label}</button>)}
+        {TABS.map(([id, label]) => <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => { setTab(id); marcarRuta(id === "consumo" ? "modelos" : `modelos/${id}`); }}>{label}</button>)}
       </div>
       {tab === "consumo" && <Consumo data={data} />}
       {tab === "proveedores" && <Proveedores data={data} />}

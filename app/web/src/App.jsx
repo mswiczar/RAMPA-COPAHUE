@@ -13,6 +13,8 @@ import OperacionesView from "./components/OperacionesView.jsx";
 import ProduccionView from "./components/ProduccionView.jsx";
 import AuditView from "./components/AuditView.jsx";
 import ModelosView from "./components/ModelosView.jsx";
+import AyudaPopup from "./ayuda/AyudaPopup.jsx";
+import GuiaPrimeraVez from "./ayuda/GuiaPrimeraVez.jsx";
 
 function useRoute() {
   const read = () => (window.location.hash.replace(/^#\/?/, "") || "sala").split("/");
@@ -84,6 +86,7 @@ export default function App({ user, permisos, onLogout }) {
         <div className="top-meta">
           {summary && <span className="pill"><i className="dot live" />{summary.runningTasks} en curso · {summary.activeSchedules} programaciones</span>}
           <span className="pill">Datos simulados</span>
+          <AyudaPopup />
           <span className="pill usuario" title="Sesión iniciada"><i className="rol-dot" />{user.nombre} · {user.rolLabel}</span>
           <button className="btn small ghost" type="button" onClick={onLogout}>Salir</button>
         </div>
@@ -97,7 +100,7 @@ export default function App({ user, permisos, onLogout }) {
             {agents && <AgentPanel key={agentId} agentId={agentId} agents={agents} />}
           </div>
         )}
-        {view === "auditoria" && puedeVer("auditoria") && <AuditView />}
+        {view === "auditoria" && puedeVer("auditoria") && <AuditView key={param} sub={param} />}
         {view === "modelos" && puedeVer("modelos") && <ModelosView key={param} sub={param} />}
         {view === "comercial" && puedeVer("comercial") && <ComercialView key={param} sub={param} detalle={detalle} />}
         {view === "rd" && puedeVer("rd") && <RDView key={param} sub={param} />}
@@ -109,6 +112,7 @@ export default function App({ user, permisos, onLogout }) {
         {view === "bandeja" && <OutboxView agents={agents || []} focus={param} />}
         {view === "entregables" && <DeliverablesView agents={agents || []} focus={param} />}
       </main>
+      {puedeVer(view) && <GuiaPrimeraVez />}
     </div>
   );
 }

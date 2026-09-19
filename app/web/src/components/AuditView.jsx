@@ -1,11 +1,12 @@
 import { useState } from "react";
+import { marcarRuta } from "../ayuda/util.js";
 import { useFetch } from "../live.jsx";
 import { fmtDate, fmtRelative } from "../format.js";
 
 const SOLUCIONES = { comercial: "Comercial", finanzas: "Finanzas", rd: "R&D", operaciones: "Operaciones", produccion: "Producción" };
 
-export default function AuditView() {
-  const [tab, setTab] = useState("registro");
+export default function AuditView({ sub }) {
+  const [tab, setTab] = useState(sub === "permisos" ? "permisos" : "registro");
   return (
     <div className="page">
       <div className="page-head">
@@ -17,7 +18,7 @@ export default function AuditView() {
       </div>
       <div className="tabs solution-tabs" role="tablist">
         {[["registro", "Registro"], ["permisos", "Roles y permisos"]].map(([id, label]) => (
-          <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => setTab(id)}>{label}</button>
+          <button key={id} role="tab" aria-selected={tab === id} className={tab === id ? "active" : ""} onClick={() => { setTab(id); marcarRuta(id === "registro" ? "auditoria" : `auditoria/${id}`); }}>{label}</button>
         ))}
       </div>
       {tab === "registro" ? <Registro /> : <Permisos />}

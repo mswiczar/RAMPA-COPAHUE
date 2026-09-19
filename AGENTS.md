@@ -41,6 +41,15 @@ systemctl restart copahue-sala
 
 Después, en Modelos › Proveedores: «Probar conexión» y «Traer modelos» (completa los ids de DigitalOcean). Sin clave, las tareas salen con el sistema de reglas y el flujo queda marcado como simulado. Todos los proveedores usan hoy el formato compatible con OpenAI (`/chat/completions`); un servidor propio (Ollama, vLLM) se agrega desde la misma pantalla.
 
+### Ayuda y documentación de pantallas
+
+La ayuda vive en `app/ayuda/`: un Markdown por pantalla y pestaña (frontmatter con `titulo`, `grupo`, `ruta`, `captura`, `guia`). De ahí leen el sitio `/ayuda`, el popup **? Ayuda** de cada pantalla, el agente de ayuda y la guía de primera vez.
+
+- **Toda pantalla o pestaña nueva** se agrega a `app/ayuda/rutas.json` y se documenta. `node ayuda/verificar.mjs` falla si falta una página, y `deploy.sh` lo corre antes de compilar: sin documentación no hay deploy.
+- **Capturas:** `bash app/ayuda/capturas.sh http://localhost:3299` contra una copia sin login (una copia en `/tmp` del servidor con un túnel ssh). Se guardan en `app/ayuda/capturas/`.
+- **Pestañas:** actualizan el hash con `marcarRuta()` (`web/src/ayuda/util.js`) para que la ayuda sepa dónde está la persona.
+- **Preguntas que la ayuda no supo responder:** quedan en `/ayuda#/sin-respuesta` (solo Dirección).
+
 ### Desplegar una nueva versión
 
 Desde la raíz del repo, en Git Bash:
